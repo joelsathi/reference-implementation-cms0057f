@@ -1,13 +1,13 @@
-import { OxygenTheme } from '@wso2/oxygen-ui';
+import { AcrylicOrangeTheme } from '@wso2/oxygen-ui';
 
 // Extend the OxygenUI theme with custom tokens
 export const customTheme = {
-  ...OxygenTheme,
+  ...AcrylicOrangeTheme,
   palette: {
-    ...OxygenTheme.palette,
+    ...AcrylicOrangeTheme.palette,
     text: {
-      ...OxygenTheme.palette.text,
-      tertiary: OxygenTheme.palette.mode === 'light' ? '#00000099' : '#FFFFFF99',
+      ...AcrylicOrangeTheme.palette.text,
+      tertiary: AcrylicOrangeTheme.palette.mode === 'light' ? '#00000099' : '#FFFFFF99',
     },
   },
 };
