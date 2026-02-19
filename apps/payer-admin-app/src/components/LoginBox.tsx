@@ -31,11 +31,9 @@ import {
   Typography
 } from '@wso2/oxygen-ui';
 import { Eye, EyeOff } from '@wso2/oxygen-ui-icons-react'
-import {useNavigate} from 'react-router';
 
 export default function LoginBox(): JSX.Element {
   const [error] = useState(false);
-  const navigate = useNavigate();
 
   const [showPassword, setShowPassword] = useState(false);
   const [username, setUsername] = useState("admin");
@@ -53,7 +51,6 @@ export default function LoginBox(): JSX.Element {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    navigate('/');
   };
 
   return (
@@ -74,8 +71,6 @@ export default function LoginBox(): JSX.Element {
         </Alert>
       }
           
-
-
       <Box display="flex" flexDirection="column" gap={2}>
         <Box display="flex" flexDirection="column" gap={0.5}>
           <InputLabel htmlFor="username">Username</InputLabel>
@@ -137,6 +132,7 @@ export default function LoginBox(): JSX.Element {
         <Button variant="contained" color="primary" type="submit" fullWidth sx={{ mt: 2 }}>
           Sign In
         </Button>
+        <button onClick={() => {window.location.href="/auth/login"}}>Login</button>
       </Box>
     </form>
   )

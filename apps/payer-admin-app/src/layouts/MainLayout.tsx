@@ -66,6 +66,7 @@ export default function MainLayout() {
         } finally {
             logout();
             handleMenuClose();
+            window.location.href="/auth/login";
         }
     };
 
