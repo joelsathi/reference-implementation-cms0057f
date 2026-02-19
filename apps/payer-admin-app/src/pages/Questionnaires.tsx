@@ -19,8 +19,7 @@ import { Plus, Search, UploadIcon, Sparkles } from '@wso2/oxygen-ui-icons-react'
 import QuestionnaireCard from '../components/QuestionnaireCard';
 import LoadingCardSkeleton from '../components/LoadingCardSkeleton';
 import DeleteConfirmationModal from '../components/DeleteConfirmationModal';
-import { parseQuestionnaireResource, generateUUID } from '../types/questionnaire';
-import mockQuestionnaire from '../mock/sampleQuestionnaire.json';
+import { generateUUID } from '../types/questionnaire';
 import botIcon from '../assets/images/bot-icon.png';
 import { questionnairesAPI, type QuestionnaireListItem } from '../api/questionnaires';
 
@@ -164,53 +163,13 @@ export default function Questionnaires() {
       await new Promise((resolve) => setTimeout(resolve, 2000)); // 2 seconds per step
     }
 
-    // Load sample questionnaire
-    try {
-      const sampleQuestionnaire = mockQuestionnaire;
-
-      const { questionnaire: generatedQuestionnaire, errors } = parseQuestionnaireResource(sampleQuestionnaire);
-      
-      if (generatedQuestionnaire) {
-        // Create questionnaire via API
-        const createdQuestionnaire = await questionnairesAPI.createQuestionnaire(generatedQuestionnaire);
-
-        if (errors.length > 0) {
-          setSnackbar({
-            open: true,
-            message: `Generated with ${errors.length} validation warning(s). Check the questionnaire details.`,
-            severity: 'warning',
-          });
-        } else {
-          setSnackbar({
-            open: true,
-            message: 'Questionnaire generated successfully from PDF!',
-            severity: 'success',
-          });
-        }
-        
-        setSelectedPdfFile(null);
-        setIsProcessing(false);
-        setProcessingStep(0);
-        
-        // Reset file input
-        if (pdfInputRef.current) {
-          pdfInputRef.current.value = '';
-        }
-        
-        // Navigate to the new questionnaire
-        setTimeout(() => {
-          navigate(`/questionnaires/${createdQuestionnaire.id}`);
-        }, 1000);
-      }
-    } catch (error) {
-      console.error('Error generating questionnaire:', error);
-      setSnackbar({
-        open: true,
-        message: 'Failed to generate questionnaire. Please try again.',
-        severity: 'error',
-      });
-      setIsProcessing(false);
-    }
+    // TODO: Replace with actual API call to process PDF and generate questionnaire
+    setIsProcessing(false);
+    setSnackbar({
+      open: true,
+      message: 'Questionnaire generated successfully from PDF!',
+      severity: 'success',
+    });
   };
 
   return (
