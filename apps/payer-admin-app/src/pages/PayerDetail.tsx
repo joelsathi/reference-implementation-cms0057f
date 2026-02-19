@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Box, Typography, Button, Card, TextField, IconButton, InputAdornment, Chip } from '@wso2/oxygen-ui';
 import { ArrowLeft, Eye, EyeOff } from '@wso2/oxygen-ui-icons-react';
+import { useAuth } from '../components/useAuth';
 import { payersAPI } from '../api/payers';
 import type { Payer, ErrorPayload } from '../api/payers';
 import { DetailPageSkeleton } from '../components/LoadingSkeletons';
@@ -34,6 +35,7 @@ const transformPayer = (payer: Payer): PayerData => ({
 export default function PayerDetail() {
   const navigate = useNavigate();
   const { payerId } = useParams<{ payerId: string }>();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
 
   const [payer, setPayer] = useState<PayerData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -84,6 +86,20 @@ export default function PayerDetail() {
       setLoading(false);
     }
   };
+
+  // Show loading while checking authentication
+  if (authLoading) {
+    return (
+      <Box sx={{ p: 4 }}>
+        <Typography>Loading...</Typography>
+      </Box>
+    );
+  }
+
+  // Redirect handled by AuthProvider
+  if (!isAuthenticated) {
+    return null;
+  }
 
   const hasChanges = useMemo(() => {
     if (!payer) return false;

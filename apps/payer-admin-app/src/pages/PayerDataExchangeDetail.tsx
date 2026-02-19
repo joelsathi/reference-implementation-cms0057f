@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useAuth } from '../components/useAuth';
 import {
   Box,
   Typography,
@@ -23,6 +24,7 @@ import { DetailPageSkeleton } from '../components/LoadingSkeletons';
 export default function PayerDataExchangeDetail() {
   const navigate = useNavigate();
   const { exchangeId } = useParams<{ exchangeId: string }>();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [data, setData] = useState<PdexDataRequest | null>(null);
   const [patient, setPatient] = useState<PatientInfo | null>(null);
   const [loading, setLoading] = useState(true);
@@ -79,6 +81,20 @@ export default function PayerDataExchangeDetail() {
       setTriggering(false);
     }
   };
+
+  // Show loading while checking authentication
+  if (authLoading) {
+    return (
+      <Box sx={{ p: 4 }}>
+        <Typography>Loading...</Typography>
+      </Box>
+    );
+  }
+
+  // Redirect handled by AuthProvider
+  if (!isAuthenticated) {
+    return null;
+  }
 
   const getStatusConfig = (currentStatus: string) => {
     switch (currentStatus) {

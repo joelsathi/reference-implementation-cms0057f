@@ -21,6 +21,7 @@ import {
     LogOut,
     ChevronDown,
 } from '@wso2/oxygen-ui-icons-react';
+import { useAuth } from '../components/useAuth';
 
 interface SidebarItem {
     id: string;
@@ -43,6 +44,7 @@ interface SidebarChildItem {
 export default function MainLayout() {
     const navigate = useNavigate();
     const location = useLocation();
+    const { userInfo, logout, isLoading } = useAuth();
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const [manageExpanded, setManageExpanded] = useState(false);
     const [collapsed, setCollapsed] = useState(false);
@@ -55,10 +57,32 @@ export default function MainLayout() {
         setAnchorEl(null);
     };
 
-    const handleLogout = () => {
-        // Add logout logic here
-        console.log('Logout clicked');
-        handleMenuClose();
+    const handleLogout = async () => {
+        try {
+            // Call logout endpoint if it exists
+            await fetch("/auth/logout", { method: "POST" });
+        } catch (error) {
+            console.error("Logout error:", error);
+        } finally {
+            logout();
+            handleMenuClose();
+        }
+    };
+
+    // Get display name and email
+    const displayName = userInfo 
+        ? `${userInfo.first_name} ${userInfo.last_name}`.trim() || userInfo.username
+        : 'Loading...';
+    
+    const userEmail = userInfo?.username || '';
+    
+    // Get initials for avatar
+    const getInitials = () => {
+        if (!userInfo) return '?';
+        if (userInfo.first_name && userInfo.last_name) {
+            return `${userInfo.first_name[0]}${userInfo.last_name[0]}`.toUpperCase();
+        }
+        return userInfo.username[0]?.toUpperCase() || '?';
     };
 
     const sidebarItems: SidebarItem[] = [
@@ -225,10 +249,10 @@ export default function MainLayout() {
                             }}
                         >
                             <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main' }}>
-                                <User size={20} />
+                                {isLoading ? <User size={20} /> : getInitials()}
                             </Avatar>
                             <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                                Admin User
+                                {displayName}
                             </Typography>
                             <ChevronDown size={16} />
                         </Box>
@@ -255,12 +279,12 @@ export default function MainLayout() {
                         >
                             <Box sx={{ px: 2, py: 1.5, display: 'flex', alignItems: 'center', gap: 2 }}>
                                 <Avatar sx={{ width: 40, height: 40, bgcolor: 'primary.main' }}>
-                                    <User size={20} />
+                                    {isLoading ? <User size={20} /> : getInitials()}
                                 </Avatar>
                                 <Box>
-                                    <Typography variant="subtitle2">Admin User</Typography>
+                                    <Typography variant="subtitle2">{displayName}</Typography>
                                     <Typography variant="caption" color="text.secondary">
-                                        admin@wso2.com
+                                        {userEmail}
                                     </Typography>
                                 </Box>
                             </Box>

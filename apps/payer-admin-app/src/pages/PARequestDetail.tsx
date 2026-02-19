@@ -68,6 +68,7 @@ import type {
 } from '../types/api';
 import { paRequestsAPI } from '../api/paRequests';
 import { PARequestDetailSkeleton } from '../components/LoadingSkeletons';
+import { useAuth } from '../components/useAuth';
 
 // Adjudication codes available for selection
 const ADJUDICATION_CODES: AdjudicationCode[] = [
@@ -136,6 +137,7 @@ export default function PARequestDetail() {
   const navigate = useNavigate();
   const location = useLocation();
   const { requestId } = useParams<{ requestId: string }>();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [paRequest, setPaRequest] = useState<PARequestDetailType | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -175,6 +177,32 @@ export default function PARequestDetail() {
   // Check if we're coming from the processed page
   const isProcessedView = location.pathname.includes('/processed/');
 
+  const updateItemAdjudication = useCallback((
+    sequence: number,
+    field: keyof ClaimItemWithAdjudication,
+    value: unknown
+  ) => {
+    setClaimItems((prev) =>
+      prev.map((item) =>
+        item.sequence === sequence ? { ...item, [field]: value } : item
+      )
+    );
+  }, []);
+
+  // Show loading while checking authentication
+  if (authLoading) {
+    return (
+      <Box sx={{ p: 4 }}>
+        <Typography>Loading...</Typography>
+      </Box>
+    );
+  }
+
+  // Redirect handled by AuthProvider
+  if (!isAuthenticated) {
+    return null;
+  }
+
   const handleBack = () => {
     if (isProcessedView) {
       navigate('/pa-requests/processed');
@@ -194,18 +222,6 @@ export default function PARequestDetail() {
   const handleAttachmentAccordionChange = (index: number) => (_event: React.SyntheticEvent, isExpanded: boolean) => {
     setExpandedAttachment(isExpanded ? index : false);
   };
-
-  const updateItemAdjudication = useCallback((
-    sequence: number,
-    field: keyof ClaimItemWithAdjudication,
-    value: unknown
-  ) => {
-    setClaimItems((prev) =>
-      prev.map((item) =>
-        item.sequence === sequence ? { ...item, [field]: value } : item
-      )
-    );
-  }, []);
 
   // Helper to extract questionnaire response items from the JSON questionnaire field
   const getQuestionnaireItems = (questionnaire: unknown): Array<{ 

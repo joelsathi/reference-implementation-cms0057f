@@ -22,9 +22,11 @@ import DeleteConfirmationModal from '../components/DeleteConfirmationModal';
 import { generateUUID } from '../types/questionnaire';
 import botIcon from '../assets/images/bot-icon.png';
 import { questionnairesAPI, type QuestionnaireListItem } from '../api/questionnaires';
+import { useAuth } from '../components/useAuth';
 
 export default function Questionnaires() {
   const navigate = useNavigate();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const pdfInputRef = useRef<HTMLInputElement>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [aiGenerateDialogOpen, setAiGenerateDialogOpen] = useState(false);
@@ -120,6 +122,20 @@ export default function Questionnaires() {
   const handlePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
     setCurrentPage(value);
   };
+
+  // Show loading while checking authentication
+  if (authLoading) {
+    return (
+      <Box sx={{ p: 4 }}>
+        <Typography>Loading...</Typography>
+      </Box>
+    );
+  }
+
+  // Redirect handled by AuthProvider
+  if (!isAuthenticated) {
+    return null;
+  }
 
   const processingSteps = [
     'Processing PDF',

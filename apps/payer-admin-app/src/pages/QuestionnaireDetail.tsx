@@ -18,6 +18,7 @@ import {
   DialogActions,
 } from '@wso2/oxygen-ui';
 import { ArrowLeft, PencilIcon, SaveIcon, UploadIcon, Info } from '@wso2/oxygen-ui-icons-react';
+import { useAuth } from '../components/useAuth';
 import QuestionnaireBuilder from '../components/QuestionnaireBuilder';
 import QuestionnairePreview from '../components/QuestionnairePreview';
 import type {
@@ -40,6 +41,7 @@ export default function QuestionnaireDetail() {
   const navigate = useNavigate();
   const location = useLocation();
   const { questionnaireId } = useParams<{ questionnaireId: string }>();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isNewQuestionnaire = location.state?.isNew === true;
@@ -114,6 +116,20 @@ export default function QuestionnaireDetail() {
       JSON.stringify(formData.item) !== JSON.stringify(originalQuestionnaire.item)
     );
   }, [formData, originalQuestionnaire, isNewQuestionnaire]);
+
+  // Show loading while checking authentication
+  if (authLoading) {
+    return (
+      <Box sx={{ p: 4 }}>
+        <Typography>Loading...</Typography>
+      </Box>
+    );
+  }
+
+  // Redirect handled by AuthProvider
+  if (!isAuthenticated) {
+    return null;
+  }
 
   if (isLoading) {
     return <QuestionnaireDetailSkeleton />;

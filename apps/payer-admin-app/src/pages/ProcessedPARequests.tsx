@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../components/useAuth';
 import {
     Box,
     Typography,
@@ -93,10 +94,25 @@ const ITEMS_PER_PAGE = 10;
 
 export default function ProcessedPARequests() {
     const navigate = useNavigate();
+    const { isAuthenticated, isLoading: authLoading } = useAuth();
     const [searchQuery, setSearchQuery] = useState('');
     const [filterAnchorEl, setFilterAnchorEl] = useState<null | HTMLElement>(null);
     const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
     const [page, setPage] = useState(1);
+
+    // Show loading while checking authentication
+    if (authLoading) {
+        return (
+            <Box sx={{ p: 4 }}>
+                <Typography>Loading...</Typography>
+            </Box>
+        );
+    }
+
+    // Redirect handled by AuthProvider
+    if (!isAuthenticated) {
+        return null;
+    }
 
     const handleBack = () => {
         navigate('/pa-requests');
@@ -152,6 +168,20 @@ export default function ProcessedPARequests() {
     const handlePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
         setPage(value);
     };
+
+    // Show loading while checking authentication
+    if (authLoading) {
+        return (
+            <Box sx={{ p: 4 }}>
+                <Typography>Loading...</Typography>
+            </Box>
+        );
+    }
+
+    // Redirect handled by AuthProvider
+    if (!isAuthenticated) {
+        return null;
+    }
 
     return (
         <Box sx={{ p: 4 }}>

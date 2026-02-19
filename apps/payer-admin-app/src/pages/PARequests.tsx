@@ -25,12 +25,14 @@ import {
 import { Search, ListFilter } from '@wso2/oxygen-ui-icons-react';
 import { paRequestsAPI, type PARequestUrgency, type PARequestListItem } from '../api/paRequests';
 import LoadingTableSkeleton from '../components/LoadingTableSkeleton';
+import { useAuth } from '../components/useAuth';
 
 // Constants
 const ITEMS_PER_PAGE = 8;
 
 export default function PARequests() {
     const navigate = useNavigate();
+    const { isAuthenticated, isLoading: authLoading } = useAuth();
     const [searchQuery, setSearchQuery] = useState('');
     const [filterAnchorEl, setFilterAnchorEl] = useState<null | HTMLElement>(null);
     const [selectedUrgencies, setSelectedUrgencies] = useState<PARequestUrgency[]>([]);
@@ -112,6 +114,20 @@ export default function PARequests() {
     const handlePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
         setPage(value);
     };
+
+    // Show loading while checking authentication
+    if (authLoading) {
+        return (
+            <Box sx={{ p: 4 }}>
+                <Typography>Loading...</Typography>
+            </Box>
+        );
+    }
+
+    // Redirect handled by AuthProvider
+    if (!isAuthenticated) {
+        return null;
+    }
 
     return (
         <Box sx={{ p: 4}}>

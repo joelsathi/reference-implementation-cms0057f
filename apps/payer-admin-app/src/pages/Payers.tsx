@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography, Button, TextField, Pagination } from '@wso2/oxygen-ui';
 import { Plus, Search } from '@wso2/oxygen-ui-icons-react';
+import { useAuth } from '../components/useAuth';
 import PayerModal from '../components/PayerModal';
 import PayerCard from '../components/PayerCard';
 import LoadingCardSkeleton from '../components/LoadingCardSkeleton';
@@ -51,6 +52,7 @@ const transformPayerData = (data: PayerData) => ({
 
 export default function Payers() {
   const navigate = useNavigate();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedPayer, setSelectedPayer] = useState<PayerData | undefined>(undefined);
@@ -152,6 +154,20 @@ export default function Payers() {
   const handlePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
     setPage(value);
   };
+
+  // Show loading while checking authentication
+  if (authLoading) {
+    return (
+      <Box sx={{ p: 4 }}>
+        <Typography>Loading...</Typography>
+      </Box>
+    );
+  }
+
+  // Redirect handled by AuthProvider
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <Box sx={{ p: 4 }}>
