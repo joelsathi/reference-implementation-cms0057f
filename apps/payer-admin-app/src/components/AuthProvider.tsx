@@ -1,0 +1,105 @@
+import {
+  useState,
+  useEffect,
+  useRef,
+} from "react";
+import { type ReactNode } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { AuthContext } from "./AuthContext";
+import type { UserInfo } from "./AuthContext";
+
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const location = useLocation();
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const navigate = useNavigate();
+  const hasCheckedAuth = useRef(false);
+
+  useEffect(() => {
+    // Only check auth once on mount
+    if (hasCheckedAuth.current) return;
+    hasCheckedAuth.current = true;
+
+    const checkAuth = async () => {
+      try {
+        const response = await fetch("/auth/userinfo");
+
+        if (response.status === 200) {
+          const loggedUser = await response.json();
+          setUserInfo({
+            username: loggedUser.username,
+            first_name: loggedUser.first_name,
+            last_name: loggedUser.last_name,
+            id: loggedUser.id,
+          });
+          setIsAuthenticated(true);
+          setIsLoading(false);
+          
+          // Only redirect if we're on the login page
+          if (location.pathname === "/login") {
+            navigate("/", { replace: true });
+          }
+        } else if (response.status === 401) {
+          setIsAuthenticated(false);
+          setUserInfo(null);
+          setIsLoading(false);
+          
+          // Only redirect to login if we're not already there
+          if (location.pathname !== "/login") {
+            navigate("/login", { replace: true });
+          }
+        }
+      } catch (error) {
+        console.error("Authentication check failed:", error);
+        setIsAuthenticated(false);
+        setUserInfo(null);
+        setIsLoading(false);
+        
+        if (location.pathname !== "/login") {
+          navigate("/login", { replace: true });
+        }
+      }
+    };
+
+    checkAuth();
+  }, [location.pathname, navigate]);
+
+  const manualCheckAuth = async () => {
+    try {
+      const response = await fetch("/auth/userinfo");
+
+      if (response.status === 200) {
+        const loggedUser = await response.json();
+        setUserInfo({
+          username: loggedUser.username,
+          first_name: loggedUser.first_name,
+          last_name: loggedUser.last_name,
+          id: loggedUser.id,
+        });
+        setIsAuthenticated(true);
+      } else if (response.status === 401) {
+        setIsAuthenticated(false);
+        setUserInfo(null);
+        navigate("/login", { replace: true });
+      }
+    } catch (error) {
+      console.error("Authentication check failed:", error);
+      setIsAuthenticated(false);
+      setUserInfo(null);
+      navigate("/login", { replace: true });
+    }
+  };
+
+  const logout = () => {
+    setIsAuthenticated(false);
+    setUserInfo(null);
+    navigate("/login", { replace: true });
+  };
+
+  return (
+    <AuthContext.Provider value={{ isAuthenticated, userInfo, isLoading, checkAuth: manualCheckAuth, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};

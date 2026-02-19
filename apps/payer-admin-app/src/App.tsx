@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './components/AuthProvider';
 import MainLayout from './layouts/MainLayout';
 import PARequests from './pages/PARequests';
 import ProcessedPARequests from './pages/ProcessedPARequests';
@@ -14,22 +15,24 @@ import LoginPage from './pages/LoginPage';
 function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/" element={<MainLayout />}>
-          <Route index element={<Navigate to="/pa-requests" replace />} />
-          <Route path="pa-requests" element={<PARequests />} />
-          <Route path="pa-requests/processed" element={<ProcessedPARequests />} />
-          <Route path="pa-requests/processed/:requestId" element={<PARequestDetail />} />
-          <Route path="pa-requests/:requestId" element={<PARequestDetail />} />
-          <Route path="payer-data-exchange" element={<PayerDataExchange />} />
-          <Route path="payer-data-exchange/:exchangeId" element={<PayerDataExchangeDetail />} />
-          <Route path="questionnaires" element={<Questionnaires />} />
-          <Route path="questionnaires/:questionnaireId" element={<QuestionnaireDetail />} />
-          <Route path="manage/payers" element={<Payers />} />
-          <Route path="manage/payers/:payerId" element={<PayerDetail />} />
-        </Route>
-      </Routes>
+      <AuthProvider>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/" element={<MainLayout />}>
+            <Route index element={<Navigate to="/pa-requests" replace />} />
+            <Route path="pa-requests" element={<PARequests />} />
+            <Route path="pa-requests/processed" element={<ProcessedPARequests />} />
+            <Route path="pa-requests/processed/:requestId" element={<PARequestDetail />} />
+            <Route path="pa-requests/:requestId" element={<PARequestDetail />} />
+            <Route path="payer-data-exchange" element={<PayerDataExchange />} />
+            <Route path="payer-data-exchange/:exchangeId" element={<PayerDataExchangeDetail />} />
+            <Route path="questionnaires" element={<Questionnaires />} />
+            <Route path="questionnaires/:questionnaireId" element={<QuestionnaireDetail />} />
+            <Route path="manage/payers" element={<Payers />} />
+            <Route path="manage/payers/:payerId" element={<PayerDetail />} />
+          </Route>
+        </Routes>
+      </AuthProvider>
     </BrowserRouter>
   );
 }
