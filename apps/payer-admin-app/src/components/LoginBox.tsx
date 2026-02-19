@@ -129,10 +129,9 @@ export default function LoginBox(): JSX.Element {
         </Box>
 
         <input type="hidden" id="sessionDataKey" name="sessionDataKey" value="" />
-        <Button variant="contained" color="primary" type="submit" fullWidth sx={{ mt: 2 }}>
+        <Button variant="contained" color="primary" type="submit" fullWidth sx={{ mt: 2 }} onClick={() => {window.location.href="/auth/login"}}>
           Sign In
         </Button>
-        <button onClick={() => {window.location.href="/auth/login"}}>Login</button>
       </Box>
     </form>
   )
