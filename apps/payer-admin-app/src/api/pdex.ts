@@ -1,5 +1,5 @@
 // PDEX Data Exchange API Client
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8091/pdex';
+const API_BASE_URL = window.config?.PDEX_API_URL || 'http://localhost:8091/pdex';
 
 // Backend API response structure
 export interface PdexDataRequestAPI {
