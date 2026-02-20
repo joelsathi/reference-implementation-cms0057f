@@ -19,7 +19,7 @@ export const apiClient = async (
   // Handle 401 Unauthorized
   if (response.status === 401) {
     if (navigate401Handler) {
-      navigate401Handler("/login");
+      navigate401Handler("/auth/login");
     }
     throw new Error("Unauthorized - Session expired");
   }
