@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
     Box,
     Typography,
@@ -20,10 +20,10 @@ import {
     FormGroup,
     Divider,
     Pagination,
-    Alert,
+    Alert
 } from '@wso2/oxygen-ui';
-import { Search, ListFilter } from '@wso2/oxygen-ui-icons-react';
-import { paRequestsAPI, type PARequestUrgency, type PARequestListItem } from '../api/paRequests';
+import { Search, ListFilter, ArrowLeft } from '@wso2/oxygen-ui-icons-react';
+import { paRequestsAPI, type PARequestUrgency, type PARequestListItem, type PARequestProcessingStatus } from '../api/paRequests';
 import LoadingTableSkeleton from '../components/LoadingTableSkeleton';
 import { useAuth } from '../components/useAuth';
 
@@ -32,16 +32,19 @@ const ITEMS_PER_PAGE = 8;
 
 export default function PARequests() {
     const navigate = useNavigate();
+    const location = useLocation();
     const { isAuthenticated, isLoading: authLoading } = useAuth();
     const [searchQuery, setSearchQuery] = useState('');
     const [filterAnchorEl, setFilterAnchorEl] = useState<null | HTMLElement>(null);
     const [selectedUrgencies, setSelectedUrgencies] = useState<PARequestUrgency[]>([]);
+    const [selectedStatuses, setSelectedStatuses] = useState<PARequestProcessingStatus[]>([]);
     const [page, setPage] = useState(1);
     const [requests, setRequests] = useState<PARequestListItem[]>([]);
     // const [analytics, setAnalytics] = useState<PARequestAnalytics | null>(null);
     const [totalPages, setTotalPages] = useState(1);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const isProcessedView = location.pathname.includes('/processed/');
 
     // Fetch PA requests from API
     useEffect(() => {
@@ -49,10 +52,15 @@ export default function PARequests() {
             setLoading(true);
             setError(null);
             try {
+                // Determine which statuses to fetch based on active tab
+                const statuses: PARequestProcessingStatus[] = 
+                    isProcessedView
+                        ? ['Completed', 'Error']
+                        : ['Pending'];
                 const response = await paRequestsAPI.listPARequests({
                     search: searchQuery || undefined,
                     urgency: selectedUrgencies.length > 0 ? selectedUrgencies : undefined,
-                    status: ['Pending'],
+                    status: statuses,
                     page,
                     limit: ITEMS_PER_PAGE,
                 });
@@ -68,7 +76,7 @@ export default function PARequests() {
         };
 
         fetchRequests();
-    }, [searchQuery, selectedUrgencies, page]);
+    }, [searchQuery, selectedUrgencies, selectedStatuses, page, location.pathname, isProcessedView]);
 
     const handleFilterClick = (event: React.MouseEvent<HTMLElement>) => {
         setFilterAnchorEl(event.currentTarget);
@@ -95,10 +103,15 @@ export default function PARequests() {
 
     const clearFilters = () => {
         setSelectedUrgencies([]);
+        setSelectedStatuses([]);
     };
 
     const handleRowClick = (responseId: string) => {
-        navigate(`/pa-requests/${responseId}`);
+        if (isProcessedView) { 
+            navigate(`/pa-requests/processed/${responseId}`);
+        } else {
+            navigate(`/pa-requests/${responseId}`);
+        }
     };
 
     const handleViewProcessed = () => {
@@ -109,6 +122,10 @@ export default function PARequests() {
         type: string
     ): 'error' | 'default' => {
         return type === 'Urgent' ? 'error' : 'default';
+    };
+
+    const handleBack = () => {
+        navigate('/pa-requests');
     };
 
     const handlePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
@@ -131,6 +148,17 @@ export default function PARequests() {
 
     return (
         <Box sx={{ p: 4}}>
+            {isProcessedView && (
+                <Button
+                    startIcon={<ArrowLeft size={20} />}
+                    onClick={handleBack}
+                    sx={{ mb: 3 }}
+                    variant="text"
+                >
+                Back to Pending Requests
+            </Button>
+            )}
+
             {/* Header */}
             <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <Box>
@@ -352,6 +380,9 @@ export default function PARequests() {
                     onClose={handleFilterClose}
                 >
                     <Box sx={{ px: 3, py: 2, minWidth: 250 }}>
+                        <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>
+                            Urgency
+                        </Typography>
                         <FormGroup>
                             <FormControlLabel
                                 control={
