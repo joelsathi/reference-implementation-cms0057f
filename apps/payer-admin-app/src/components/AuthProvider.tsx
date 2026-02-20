@@ -28,26 +28,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (response.status === 200) {
           const loggedUser = await response.json();
           setUserInfo({
-            username: loggedUser.username,
-            first_name: loggedUser.first_name,
-            last_name: loggedUser.last_name,
-            id: loggedUser.id,
+            username: loggedUser.username ?? "User",
+            first_name: loggedUser.first_name ?? "User",
+            last_name: loggedUser.last_name ?? "",
+            id: loggedUser.id ?? "ID-12302",
           });
           setIsAuthenticated(true);
           setIsLoading(false);
-          
-          // Only redirect if we're on the login page
-          if (location.pathname === "/login") {
-            navigate("/", { replace: true });
-          }
+          navigate("/", { replace: true });
+
         } else if (response.status === 401) {
           setIsAuthenticated(false);
           setUserInfo(null);
           setIsLoading(false);
           
           // Only redirect to login if we're not already there
-          if (location.pathname !== "/login") {
-            navigate("/login", { replace: true });
+          if (location.pathname !== "/auth/login") {
+            navigate("/auth/login", { replace: true });
           }
         }
       } catch (error) {
@@ -56,8 +53,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUserInfo(null);
         setIsLoading(false);
         
-        if (location.pathname !== "/login") {
-          navigate("/login", { replace: true });
+        if (location.pathname !== "/auth/login") {
+          navigate("/auth/login", { replace: true });
         }
       }
     };
@@ -81,20 +78,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } else if (response.status === 401) {
         setIsAuthenticated(false);
         setUserInfo(null);
-        navigate("/login", { replace: true });
+        navigate("/auth/login", { replace: true });
       }
     } catch (error) {
       console.error("Authentication check failed:", error);
       setIsAuthenticated(false);
       setUserInfo(null);
-      navigate("/login", { replace: true });
+      navigate("/auth/login", { replace: true });
     }
   };
 
   const logout = () => {
     setIsAuthenticated(false);
     setUserInfo(null);
-    navigate("/login", { replace: true });
+    navigate("/auth/login", { replace: true });
   };
 
   return (
