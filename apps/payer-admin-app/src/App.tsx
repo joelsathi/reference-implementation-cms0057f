@@ -10,14 +10,12 @@ import Questionnaires from './pages/Questionnaires';
 import QuestionnaireDetail from './pages/QuestionnaireDetail';
 import Payers from './pages/Payers';
 import PayerDetail from './pages/PayerDetail';
-import LoginPage from './pages/LoginPage';
 
 function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
         <Routes>
-          <Route path="/login" element={<LoginPage />} />
           <Route path="/" element={<MainLayout />}>
             <Route index element={<Navigate to="/pa-requests" replace />} />
             <Route path="pa-requests" element={<PARequests />} />
