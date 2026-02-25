@@ -116,12 +116,11 @@ export default function PayerDataExchangeDetail() {
           icon: <XCircleIcon size={20} />,
           label: 'Error',
         };
-      case 'Initiate':
       default:
         return {
           color: 'default' as const,
           icon: <ClockIcon size={20} />,
-          label: 'Not Initiated',
+          label: 'Initiate',
         };
     }
   };
@@ -139,7 +138,7 @@ export default function PayerDataExchangeDetail() {
           sx={{ mb: 3 }}
           variant="text"
         >
-          Back to Data Exchanges
+          Back to Payer Data Exchanges
         </Button>
         <Alert severity="error">
           {error || 'Failed to load data exchange details'}
@@ -159,14 +158,14 @@ export default function PayerDataExchangeDetail() {
         sx={{ mb: 3 }}
         variant="text"
       >
-        Back to Data Exchanges
+        Back to Payer Data Exchanges
       </Button>
 
       {/* Header */}
       <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Box>
           <Typography variant="h4" gutterBottom sx={{ fontWeight: 600 }}>
-            Data Exchange Details
+            Payer Data Exchange Details
           </Typography>
           <Typography variant="body1" color="text.secondary">
             Exchange ID: {exchangeId}
@@ -180,8 +179,8 @@ export default function PayerDataExchangeDetail() {
             <Chip
               label={data.consent}
               color={
-                data.consent === 'GRANTED' ? 'success' :
-                data.consent === 'DENIED' ? 'error' :
+                data.consent.toUpperCase() === 'APPROVED' ? 'success' :
+                data.consent.toUpperCase() === 'DENIED' ? 'error' :
                 'warning'
               }
               sx={{ fontWeight: 600 }}
@@ -205,7 +204,7 @@ export default function PayerDataExchangeDetail() {
       <Card sx={{ mb: 3 }}>
         <CardContent>
           <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
-            Patient Information
+            Member Information
           </Typography>
           <Divider sx={{ mb: 2 }} />
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
@@ -230,7 +229,7 @@ export default function PayerDataExchangeDetail() {
                 Member ID
               </Typography>
               <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                {patient?.memberId || data.patientId || 'N/A'}
+                {data.patientId || 'N/A'}
               </Typography>
             </Box>
             <Box>
@@ -320,11 +319,11 @@ export default function PayerDataExchangeDetail() {
             variant="contained"
             size="large"
             onClick={handleInitiate}
-            disabled={data.consent !== 'GRANTED' || triggering}
+            disabled={data.consent.toUpperCase() !== 'APPROVED' || triggering}
           >
             {triggering ? 'Initiating...' : 'Initiate Data Exchange'}
           </Button>
-          {data.consent !== 'GRANTED' && (
+          {data.consent.toUpperCase() !== 'APPROVED' && (
             <Typography variant="caption" color="text.secondary" sx={{ ml: 2, alignSelf: 'center' }}>
               Patient consent is required to initiate data exchange
             </Typography>
