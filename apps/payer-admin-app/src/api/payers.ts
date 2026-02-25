@@ -8,7 +8,7 @@ export interface PayerFormData {
   fhir_server_url: string;
   app_client_id: string;
   app_client_secret: string;
-  token_url: string;
+  smart_config_url: string;
   scopes?: string;
 }
 

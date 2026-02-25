@@ -31,7 +31,7 @@ interface PayerData {
   fhirServerUrl: string;
   appClientId: string;
   appClientSecret: string;
-  tokenUrl: string;
+  smartConfigUrl: string;
   scopes: string | null;
 }
 
@@ -61,7 +61,7 @@ export default function PayerModal({ open, onClose, payer, onSave }: PayerModalP
       fhirServerUrl: '',
       appClientId: '',
       appClientSecret: '',
-      tokenUrl: '',
+      smartConfigUrl: '',
       scopes: null,
     };
   };
@@ -127,7 +127,7 @@ export default function PayerModal({ open, onClose, payer, onSave }: PayerModalP
       if (!formData.fhirServerUrl.trim()) newErrors.fhirServerUrl = true;
       if (!formData.appClientId.trim()) newErrors.appClientId = true;
       if (!formData.appClientSecret.trim()) newErrors.appClientSecret = true;
-      if (!formData.tokenUrl.trim()) newErrors.tokenUrl = true;
+      if (!formData.smartConfigUrl.trim()) newErrors.smartConfigUrl = true;
     }
     
     setErrors(newErrors);
@@ -152,7 +152,7 @@ export default function PayerModal({ open, onClose, payer, onSave }: PayerModalP
     if (!formData.fhirServerUrl.trim()) newErrors.fhirServerUrl = true;
     if (!formData.appClientId.trim()) newErrors.appClientId = true;
     if (!formData.appClientSecret.trim()) newErrors.appClientSecret = true;
-    if (!formData.tokenUrl.trim()) newErrors.tokenUrl = true;
+    if (!formData.smartConfigUrl.trim()) newErrors.smartConfigUrl = true;
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -200,7 +200,7 @@ export default function PayerModal({ open, onClose, payer, onSave }: PayerModalP
       } else {
         setResult(`Received HTTP ${response.status} while reaching the URL.`);
       }
-    } catch (error) {
+    } catch {
       setResult('Unable to reach the URL. Please check the value or network/CORS settings.');
     } finally {
       setLoading(false);
@@ -211,7 +211,7 @@ export default function PayerModal({ open, onClose, payer, onSave }: PayerModalP
     testUrl(formData.fhirServerUrl + "/metadata", setFhirUrlTestResult, setTestingFhirUrl);
 
   const handleTestSmartConfigUrl = () =>
-    testUrl(formData.tokenUrl + "/.well-known/smart-configuration", setSmartConfigUrlTestResult, setTestingSmartConfigUrl);
+    testUrl(formData.smartConfigUrl + "/.well-known/smart-configuration", setSmartConfigUrlTestResult, setTestingSmartConfigUrl);
 
   const renderStepContent = (step: number) => {
     switch (step) {
@@ -339,12 +339,12 @@ export default function PayerModal({ open, onClose, payer, onSave }: PayerModalP
               </FormLabel>
               <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                 <TextField
-                  value={formData.tokenUrl}
-                  onChange={handleChange('tokenUrl')}
+                  value={formData.smartConfigUrl}
+                  onChange={handleChange('smartConfigUrl')}
                   fullWidth
                   placeholder="https://example.com"
                   size="small"
-                  error={errors.tokenUrl}
+                  error={errors.smartConfigUrl}
                   sx={{ flex: 1 }}
                   slotProps={{
                     input: {

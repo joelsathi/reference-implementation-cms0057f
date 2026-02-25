@@ -22,7 +22,7 @@ interface PayerData {
   fhirServerUrl: string;
   appClientId: string;
   appClientSecret: string;
-  tokenUrl: string;
+  smartConfigUrl: string;
   scopes: string | null;
 }
 
@@ -36,7 +36,7 @@ const transformPayer = (payer: Payer): PayerData => ({
   fhirServerUrl: payer.fhir_server_url,
   appClientId: payer.app_client_id,
   appClientSecret: payer.app_client_secret,
-  tokenUrl: payer.token_url,
+  smartConfigUrl: payer.smart_config_url,
   scopes: payer.scopes || null,
 });
 
@@ -49,7 +49,7 @@ const transformPayerData = (data: PayerData) => ({
   fhir_server_url: data.fhirServerUrl,
   app_client_id: data.appClientId,
   app_client_secret: data.appClientSecret,
-  token_url: data.tokenUrl,
+  smart_config_url: data.smartConfigUrl,
   scopes: data.scopes || undefined,
 });
 
