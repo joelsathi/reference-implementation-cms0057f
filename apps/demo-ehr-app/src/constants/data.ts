@@ -1023,6 +1023,10 @@ export const CLAIM_REQUEST_BODY = (
                 },
                 provider: {
                   reference: `${provider}`,
+                  identifier: {
+                    system: "http://hl7.org/fhir/sid/us-npi",
+                    value: "N123456"
+                  }
                 },
                 insurance: [
                   {
@@ -1177,11 +1181,13 @@ export const CREATE_MEDICATION_REQUEST_BODY = (
 
 export const CHECK_PAYER_REQUIREMENTS_REQUEST_BODY = (
   patientId: string,
-  practitionerId: string
+  practitionerId: string,
+  fhirServerUrl: string
 ) => {
   return {
     hook: "order-sign",
     hookInstance: "98765-wxyz-43210-lmno",
+    fhirServer: fhirServerUrl,
     context: {
       userId: `PractitionerRole/${practitionerId}`,
       patientId: `${patientId}`,
