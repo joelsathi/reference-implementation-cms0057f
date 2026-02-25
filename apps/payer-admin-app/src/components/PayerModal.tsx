@@ -11,8 +11,9 @@ import {
   StepLabel,
   FormLabel,
   Chip,
+  InputAdornment,
 } from '@wso2/oxygen-ui';
-import { X } from '@wso2/oxygen-ui-icons-react';
+import { X, CheckCircleIcon } from '@wso2/oxygen-ui-icons-react';
 
 // Custom styles for red asterisk
 const requiredLabelStyles = {
@@ -26,6 +27,7 @@ interface PayerData {
   name: string;
   email: string;
   state: string;
+  address: string;
   fhirServerUrl: string;
   appClientId: string;
   appClientSecret: string;
@@ -40,6 +42,12 @@ interface PayerModalProps {
   onSave: (payer: PayerData) => void;
 }
 
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const isValidEmail = (value: string) => emailRegex.test(value);
+
+const URL_SUCCESS_MESSAGE = 'Successfully reached the URL.';
+
 export default function PayerModal({ open, onClose, payer, onSave }: PayerModalProps) {
   const getInitialFormData = (): PayerData => {
     if (payer) {
@@ -49,6 +57,7 @@ export default function PayerModal({ open, onClose, payer, onSave }: PayerModalP
       name: '',
       email: '',
       state: '',
+      address: '',
       fhirServerUrl: '',
       appClientId: '',
       appClientSecret: '',
@@ -62,6 +71,10 @@ export default function PayerModal({ open, onClose, payer, onSave }: PayerModalP
   const [errors, setErrors] = useState<Record<string, boolean>>({});
   const [scopeInput, setScopeInput] = useState('');
   const [scopeChips, setScopeChips] = useState<string[]>([]);
+  const [testingFhirUrl, setTestingFhirUrl] = useState(false);
+  const [fhirUrlTestResult, setFhirUrlTestResult] = useState<string | null>(null);
+  const [testingSmartConfigUrl, setTestingSmartConfigUrl] = useState(false);
+  const [smartConfigUrlTestResult, setSmartConfigUrlTestResult] = useState<string | null>(null);
   
   const steps = ['Basic Information', 'FHIR Configuration'];
 
@@ -74,6 +87,10 @@ export default function PayerModal({ open, onClose, payer, onSave }: PayerModalP
       const initialScopes = payer?.scopes ? payer.scopes.split(' ').filter(s => s.trim()) : [];
       setScopeChips(initialScopes);
       setScopeInput('');
+      setTestingFhirUrl(false);
+      setTestingSmartConfigUrl(false);
+      setFhirUrlTestResult(null);
+      setSmartConfigUrlTestResult(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, payer]);
@@ -102,7 +119,9 @@ export default function PayerModal({ open, onClose, payer, onSave }: PayerModalP
     if (activeStep === 0) {
       // Validate Basic Information step
       if (!formData.name.trim()) newErrors.name = true;
-      if (!formData.email.trim()) newErrors.email = true;
+      if (!formData.email.trim() || !isValidEmail(formData.email.trim())) {
+        newErrors.email = true;
+      }
     } else if (activeStep === 1) {
       // Validate FHIR Configuration step
       if (!formData.fhirServerUrl.trim()) newErrors.fhirServerUrl = true;
@@ -124,6 +143,22 @@ export default function PayerModal({ open, onClose, payer, onSave }: PayerModalP
   };
 
   const handleSubmit = () => {
+    const newErrors: Record<string, boolean> = {};
+
+    if (!formData.name.trim()) newErrors.name = true;
+    if (!formData.email.trim() || !isValidEmail(formData.email.trim())) {
+      newErrors.email = true;
+    }
+    if (!formData.fhirServerUrl.trim()) newErrors.fhirServerUrl = true;
+    if (!formData.appClientId.trim()) newErrors.appClientId = true;
+    if (!formData.appClientSecret.trim()) newErrors.appClientSecret = true;
+    if (!formData.tokenUrl.trim()) newErrors.tokenUrl = true;
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
     // Convert scope chips to string before saving
     const dataToSave = {
       ...formData,
@@ -149,6 +184,34 @@ export default function PayerModal({ open, onClose, payer, onSave }: PayerModalP
   };
 
   const isEditMode = Boolean(payer);
+
+  const testUrl = async (url: string, setResult: (value: string | null) => void, setLoading: (value: boolean) => void) => {
+    if (!url.trim()) {
+      setResult('Please enter a URL to test.');
+      return;
+    }
+
+    setLoading(true);
+    setResult(null);
+    try {
+      const response = await fetch(url, { method: 'GET' });
+      if (response.ok) {
+        setResult(URL_SUCCESS_MESSAGE);
+      } else {
+        setResult(`Received HTTP ${response.status} while reaching the URL.`);
+      }
+    } catch (error) {
+      setResult('Unable to reach the URL. Please check the value or network/CORS settings.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleTestFhirServerUrl = () =>
+    testUrl(formData.fhirServerUrl + "/metadata", setFhirUrlTestResult, setTestingFhirUrl);
+
+  const handleTestSmartConfigUrl = () =>
+    testUrl(formData.tokenUrl + "/.well-known/smart-configuration", setSmartConfigUrlTestResult, setTestingSmartConfigUrl);
 
   const renderStepContent = (step: number) => {
     switch (step) {
@@ -182,6 +245,29 @@ export default function PayerModal({ open, onClose, payer, onSave }: PayerModalP
                 size="small"
                 error={errors.email}
               />
+              {errors.email && (
+                <Typography
+                  variant="caption"
+                  sx={{ mt: 0.5, color: 'error.main' }}
+                >
+                  Enter a valid email
+                </Typography>
+              )}
+            </Box>
+
+            <Box>
+              <FormLabel sx={{ mb: 1, display: 'block', fontWeight: 500 }}>
+                Address
+              </FormLabel>
+              <TextField
+                value={formData.address}
+                onChange={handleChange('address')}
+                fullWidth
+                placeholder="Enter mailing address"
+                size="small"
+                multiline
+                minRows={2}
+              />
             </Box>
 
             <Box>
@@ -205,33 +291,97 @@ export default function PayerModal({ open, onClose, payer, onSave }: PayerModalP
               <FormLabel required sx={{ mb: 1, display: 'block', fontWeight: 500, ...requiredLabelStyles }}>
                 FHIR Server URL
               </FormLabel>
-              <TextField
-                value={formData.fhirServerUrl}
-                onChange={handleChange('fhirServerUrl')}
-                fullWidth
-                placeholder="https://example.com/fhir"
-                size="small"
-                error={errors.fhirServerUrl}
-              />
+              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                <TextField
+                  value={formData.fhirServerUrl}
+                  onChange={handleChange('fhirServerUrl')}
+                  fullWidth
+                  placeholder="https://example.com/fhir"
+                  size="small"
+                  error={errors.fhirServerUrl}
+                  sx={{ flex: 1 }}
+                  slotProps={{
+                    input: {
+                      endAdornment:
+                        fhirUrlTestResult === URL_SUCCESS_MESSAGE && !testingFhirUrl ? (
+                          <InputAdornment position="end" sx={{ color: 'success.main' }}>
+                            <CheckCircleIcon size={18} />
+                          </InputAdornment>
+                        ) : undefined,
+                    },
+                  }}
+                />
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={handleTestFhirServerUrl}
+                  disabled={testingFhirUrl}
+                >
+                  {testingFhirUrl ? 'Testing...' : 'Test'}
+                </Button>
+              </Box>
+              {fhirUrlTestResult && fhirUrlTestResult !== URL_SUCCESS_MESSAGE && (
+                <Typography
+                  variant="caption"
+                  sx={{
+                    mt: 0.5,
+                    color: fhirUrlTestResult.startsWith('Successfully') ? 'success.main' : 'error.main',
+                  }}
+                >
+                  {fhirUrlTestResult}
+                </Typography>
+              )}
             </Box>
 
             <Box>
               <FormLabel required sx={{ mb: 1, display: 'block', fontWeight: 500, ...requiredLabelStyles }}>
-                Token URL
+                SMART on FHIR Config URL
               </FormLabel>
-              <TextField
-                value={formData.tokenUrl}
-                onChange={handleChange('tokenUrl')}
-                fullWidth
-                placeholder="https://example.com/oauth/token"
-                size="small"
-                error={errors.tokenUrl}
-              />
+              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                <TextField
+                  value={formData.tokenUrl}
+                  onChange={handleChange('tokenUrl')}
+                  fullWidth
+                  placeholder="https://example.com"
+                  size="small"
+                  error={errors.tokenUrl}
+                  sx={{ flex: 1 }}
+                  slotProps={{
+                    input: {
+                      endAdornment:
+                        smartConfigUrlTestResult === URL_SUCCESS_MESSAGE && !testingSmartConfigUrl ? (
+                          <InputAdornment position="end" sx={{ color: 'success.main' }}>
+                            <CheckCircleIcon size={18} />
+                          </InputAdornment>
+                        ) : undefined,
+                    },
+                  }}
+                />
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={handleTestSmartConfigUrl}
+                  disabled={testingSmartConfigUrl}
+                >
+                  {testingSmartConfigUrl ? 'Testing...' : 'Test'}
+                </Button>
+              </Box>
+              {smartConfigUrlTestResult && smartConfigUrlTestResult !== URL_SUCCESS_MESSAGE && (
+                <Typography
+                  variant="caption"
+                  sx={{
+                    mt: 0.5,
+                    color: smartConfigUrlTestResult.startsWith('Successfully') ? 'success.main' : 'error.main',
+                  }}
+                >
+                  {smartConfigUrlTestResult}
+                </Typography>
+              )}
             </Box>
 
             <Box>
               <FormLabel required sx={{ mb: 1, display: 'block', fontWeight: 500, ...requiredLabelStyles }}>
-                App Client ID
+                Client ID
               </FormLabel>
               <TextField
                 value={formData.appClientId}
@@ -245,7 +395,7 @@ export default function PayerModal({ open, onClose, payer, onSave }: PayerModalP
 
             <Box>
               <FormLabel required sx={{ mb: 1, display: 'block', fontWeight: 500, ...requiredLabelStyles }}>
-                App Client Secret
+                Client Secret
               </FormLabel>
               <TextField
                 type="password"
@@ -334,7 +484,7 @@ export default function PayerModal({ open, onClose, payer, onSave }: PayerModalP
         >
           <Box>
             <Typography id="payer-modal-title" variant="h5" sx={{ fontWeight: 600 }}>
-              Connect a Payer
+              Onboard a Payer
             </Typography>
             <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
               Onboard the payers with your organization
@@ -410,7 +560,7 @@ export default function PayerModal({ open, onClose, payer, onSave }: PayerModalP
           </Button>
           {activeStep === steps.length - 1 ? (
             <Button variant="contained" onClick={handleSubmit}>
-              {isEditMode ? 'Update' : 'Connect'}
+              {isEditMode ? 'Update' : 'Save'}
             </Button>
           ) : (
             <Button variant="contained" onClick={handleNext}>

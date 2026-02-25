@@ -1,5 +1,5 @@
-// FHIR Server API Client
-const FHIR_BASE_URL = 'https://hapi.fhir.org/baseR4';
+// Backend API for interacting with FHIR server to fetch patient information
+const API_BASE_URL = window.config?.BFF_URL || 'http://localhost:6091/v1';
 
 export interface FhirPatient {
   resourceType: 'Patient';
@@ -68,7 +68,7 @@ function mapFhirPatientToInfo(fhirPatient: FhirPatient): PatientInfo {
  * Fetch patient information from FHIR server
  */
 export async function getPatient(patientId: string): Promise<PatientInfo> {
-  const response = await fetch(`${FHIR_BASE_URL}/Patient/${patientId}`);
+  const response = await fetch(`${API_BASE_URL}/Patient/${patientId}`);
 
   if (!response.ok) {
     throw new Error(`Failed to fetch patient: ${response.statusText}`);

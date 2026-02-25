@@ -3,6 +3,7 @@ const API_BASE_URL = window.config?.BFF_URL || 'http://localhost:6091/v1';
 export interface PayerFormData {
   name: string;
   email: string;
+  address?: string;
   state?: string;
   fhir_server_url: string;
   app_client_id: string;

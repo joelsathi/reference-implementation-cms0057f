@@ -250,7 +250,9 @@ export default function MainLayout() {
                             }}
                         >
                             <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main' }}>
-                                {isLoading ? <User size={20} /> : getInitials()}
+                                <Typography variant="h6" sx={{ color: '#fff' }}>
+                                    {isLoading ? <User size={20} /> : getInitials()}
+                                </Typography>
                             </Avatar>
                             <Typography variant="body2" sx={{ fontWeight: 500 }}>
                                 {displayName}
@@ -280,7 +282,9 @@ export default function MainLayout() {
                         >
                             <Box sx={{ px: 2, py: 1.5, display: 'flex', alignItems: 'center', gap: 2 }}>
                                 <Avatar sx={{ width: 40, height: 40, bgcolor: 'primary.main' }}>
-                                    {isLoading ? <User size={20} /> : getInitials()}
+                                    <Typography variant="h6" sx={{ color: '#fff' }}>
+                                        {isLoading ? <User size={20} /> : getInitials()}
+                                    </Typography>
                                 </Avatar>
                                 <Box>
                                     <Typography variant="subtitle2">{displayName}</Typography>

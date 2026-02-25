@@ -200,6 +200,7 @@ export interface ProcessNote {
  */
 export interface PARequestDetail {
   id: string;
+  responseId: string;
   status: string;
   use?: string;
   created: string;

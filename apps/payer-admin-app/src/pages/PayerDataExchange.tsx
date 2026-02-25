@@ -42,20 +42,6 @@ export default function PayerDataExchange() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Show loading while checking authentication
-  if (authLoading) {
-    return (
-      <Box sx={{ p: 4 }}>
-        <Typography>Loading...</Typography>
-      </Box>
-    );
-  }
-
-  // Redirect handled by AuthProvider
-  if (!isAuthenticated) {
-    return null;
-  }
-
   // Fetch data from API
   useEffect(() => {
     const fetchData = async () => {
@@ -75,6 +61,20 @@ export default function PayerDataExchange() {
 
     fetchData();
   }, [page]);
+
+  // Show loading while checking authentication
+  if (authLoading) {
+    return (
+      <Box sx={{ p: 4 }}>
+        <Typography>Loading...</Typography>
+      </Box>
+    );
+  }
+
+  // Redirect handled by AuthProvider
+  if (!isAuthenticated) {
+    return null;
+  }
 
   const handleFilterClick = (event: React.MouseEvent<HTMLElement>) => {
     setFilterAnchorEl(event.currentTarget);
@@ -163,7 +163,9 @@ export default function PayerDataExchange() {
         >
           Monitor and track all data exchange synchronization activities with payer systems
         </Typography>
-      </Box>              
+      </Box>    
+
+      <>          
       {/* Analytics Cards */}
       {/* <Box
         sx={{
@@ -304,6 +306,7 @@ export default function PayerDataExchange() {
           </CardContent>
         </Card>
       </Box> */}
+      </>
 
       {/* Error Alert */}
       {error && (
@@ -393,7 +396,9 @@ export default function PayerDataExchange() {
                 label="Initiate"
               />
             </FormGroup>
-          </Box>                      <Divider />
+          </Box>                      
+          
+          <Divider />
 
           <Box sx={{ px: 3, py: 2, display: 'flex', gap: 2 }}>
             <Button
@@ -423,7 +428,7 @@ export default function PayerDataExchange() {
             <TableRow>
               <TableCell sx={{ fontWeight: 600, color: 'primary.main' }}>Exchange ID</TableCell>
               <TableCell sx={{ fontWeight: 600, color: 'primary.main' }}>Sync Status</TableCell>
-              <TableCell sx={{ fontWeight: 600, color: 'primary.main' }}>Patient ID</TableCell>
+              <TableCell sx={{ fontWeight: 600, color: 'primary.main' }}>Member ID</TableCell>
               <TableCell sx={{ fontWeight: 600, color: 'primary.main' }}>Payer Name</TableCell>
               <TableCell sx={{ fontWeight: 600, color: 'primary.main' }}>Date Submitted</TableCell>
             </TableRow>

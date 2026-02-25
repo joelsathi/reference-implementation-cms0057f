@@ -18,6 +18,7 @@ interface PayerData {
   name: string;
   email: string;
   state: string;
+  address: string;
   fhirServerUrl: string;
   appClientId: string;
   appClientSecret: string;
@@ -31,6 +32,7 @@ const transformPayer = (payer: Payer): PayerData => ({
   name: payer.name,
   email: payer.email,
   state: payer.state || '',
+  address: payer.address || '',
   fhirServerUrl: payer.fhir_server_url,
   appClientId: payer.app_client_id,
   appClientSecret: payer.app_client_secret,
@@ -43,6 +45,7 @@ const transformPayerData = (data: PayerData) => ({
   name: data.name,
   email: data.email,
   state: data.state,
+  address: data.address,
   fhir_server_url: data.fhirServerUrl,
   app_client_id: data.appClientId,
   app_client_secret: data.appClientSecret,

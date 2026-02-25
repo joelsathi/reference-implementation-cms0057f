@@ -44,7 +44,7 @@ export default function PARequests() {
     const [totalPages, setTotalPages] = useState(1);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const isProcessedView = location.pathname.includes('/processed/');
+    const isProcessedView = location.pathname.includes('processed');
 
     // Fetch PA requests from API
     useEffect(() => {
@@ -184,13 +184,14 @@ export default function PARequests() {
                         Review and manage pending prior authorization requests
                     </Typography>
                 </Box>
-                <Button
+                {!isProcessedView && <Button
                     variant="outlined"
                     onClick={handleViewProcessed}
                     sx={{ mt: 0.5 }}
                 >
                     View Processed Requests
                 </Button>
+                }
             </Box>
 
             {/* Analytics Cards */}

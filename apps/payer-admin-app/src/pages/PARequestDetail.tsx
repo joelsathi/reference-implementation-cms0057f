@@ -876,7 +876,9 @@ export default function PARequestDetail() {
                       {getServiceDate(item)}
                     </TableCell>
                     <TableCell>
-                      {item.quantity?.value} {item.quantity?.unit}
+                      {item.quantity?.value || item.quantity?.unit
+                        ? `${item.quantity?.value ?? ''} ${item.quantity?.unit ?? ''}`.trim()
+                        : '-'}
                     </TableCell>
                     <TableCell align="right">
                       ${(item.net?.value || 0).toLocaleString()}

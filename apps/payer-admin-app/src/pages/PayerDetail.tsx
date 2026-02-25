@@ -12,6 +12,7 @@ interface PayerData {
   name: string;
   email: string;
   state: string;
+  address: string;
   fhirServerUrl: string;
   appClientId: string;
   appClientSecret: string;
@@ -25,6 +26,7 @@ const transformPayer = (payer: Payer): PayerData => ({
   name: payer.name,
   email: payer.email,
   state: payer.state || '',
+  address: payer.address || '',
   fhirServerUrl: payer.fhir_server_url,
   appClientId: payer.app_client_id,
   appClientSecret: payer.app_client_secret,
@@ -46,6 +48,7 @@ export default function PayerDetail() {
     name: '',
     email: '',
     state: '',
+    address: '',
     fhirServerUrl: '',
     appClientId: '',
     appClientSecret: '',
@@ -56,6 +59,10 @@ export default function PayerDetail() {
   const [showPassword, setShowPassword] = useState(false);
   const [scopeInput, setScopeInput] = useState('');
   const [scopeChips, setScopeChips] = useState<string[]>([]);
+  const [testingFhirUrl, setTestingFhirUrl] = useState(false);
+  const [fhirUrlTestResult, setFhirUrlTestResult] = useState<string | null>(null);
+  const [testingSmartConfigUrl, setTestingSmartConfigUrl] = useState(false);
+  const [smartConfigUrlTestResult, setSmartConfigUrlTestResult] = useState<string | null>(null);
 
   // Fetch payer data on mount
   useEffect(() => {
@@ -87,6 +94,23 @@ export default function PayerDetail() {
     }
   };
 
+  const hasChanges = useMemo(() => {
+    if (!payer) return false;
+    const currentScopes = scopeChips.length > 0 ? scopeChips.join(',') : null;
+    const originalScopes = payer.scopes || null;
+    return (
+      formData.name !== payer.name ||
+      formData.email !== payer.email ||
+      formData.state !== payer.state ||
+      formData.address !== payer.address ||
+      formData.fhirServerUrl !== payer.fhirServerUrl ||
+      formData.appClientId !== payer.appClientId ||
+      formData.appClientSecret !== payer.appClientSecret ||
+      formData.tokenUrl !== payer.tokenUrl ||
+      currentScopes !== originalScopes
+    );
+  }, [formData, payer, scopeChips]);
+
   // Show loading while checking authentication
   if (authLoading) {
     return (
@@ -100,22 +124,6 @@ export default function PayerDetail() {
   if (!isAuthenticated) {
     return null;
   }
-
-  const hasChanges = useMemo(() => {
-    if (!payer) return false;
-    const currentScopes = scopeChips.length > 0 ? scopeChips.join(',') : null;
-    const originalScopes = payer.scopes || null;
-    return (
-      formData.name !== payer.name ||
-      formData.email !== payer.email ||
-      formData.state !== payer.state ||
-      formData.fhirServerUrl !== payer.fhirServerUrl ||
-      formData.appClientId !== payer.appClientId ||
-      formData.appClientSecret !== payer.appClientSecret ||
-      formData.tokenUrl !== payer.tokenUrl ||
-      currentScopes !== originalScopes
-    );
-  }, [formData, payer, scopeChips]);
 
   // Show loading state
   if (loading) {
@@ -165,6 +173,7 @@ export default function PayerDetail() {
         name: formData.name,
         email: formData.email,
         state: formData.state,
+        address: formData.address,
         fhir_server_url: formData.fhirServerUrl,
         app_client_id: formData.appClientId,
         app_client_secret: formData.appClientSecret,
@@ -210,6 +219,32 @@ export default function PayerDetail() {
 
   const getInitial = (name: string) => {
     return name.charAt(0).toUpperCase();
+  };
+
+  const testUrl = async (
+    url: string,
+    setResult: (value: string | null) => void,
+    setLoading: (value: boolean) => void
+  ) => {
+    if (!url.trim()) {
+      setResult('Please enter a URL to test.');
+      return;
+    }
+
+    setLoading(true);
+    setResult(null);
+    try {
+      const response = await fetch(url, { method: 'GET' });
+      if (response.ok) {
+        setResult('Successfully reached the URL.');
+      } else {
+        setResult(`Received HTTP ${response.status} while reaching the URL.`);
+      }
+    } catch {
+      setResult('Unable to reach the URL. Please check the value or network/CORS settings.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -314,6 +349,14 @@ export default function PayerDetail() {
               fullWidth
               required
             />
+            <TextField
+              label="Address"
+              value={formData.address}
+              onChange={handleChange('address')}
+              fullWidth
+              multiline
+              minRows={2}
+            />
           </Box>
         </Box>
       </Card>
@@ -331,29 +374,81 @@ export default function PayerDetail() {
         </Typography>
 
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          <Box>
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+              <TextField
+                label="FHIR Server URL"
+                value={formData.fhirServerUrl}
+                onChange={handleChange('fhirServerUrl')}
+                fullWidth
+                required
+                sx={{ flex: 1 }}
+              />
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() =>
+                  testUrl(formData.fhirServerUrl, setFhirUrlTestResult, setTestingFhirUrl)
+                }
+                disabled={testingFhirUrl}
+              >
+                {testingFhirUrl ? 'Testing...' : 'Test URL'}
+              </Button>
+            </Box>
+            {fhirUrlTestResult && (
+              <Typography
+                variant="caption"
+                sx={{
+                  mt: 0.5,
+                  color: fhirUrlTestResult.startsWith('Successfully') ? 'success.main' : 'error.main',
+                }}
+              >
+                {fhirUrlTestResult}
+              </Typography>
+            )}
+          </Box>
+          <Box>
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+              <TextField
+                label="SMART on FHIR Config URL"
+                value={formData.tokenUrl}
+                onChange={handleChange('tokenUrl')}
+                fullWidth
+                required
+                sx={{ flex: 1 }}
+              />
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() =>
+                  testUrl(formData.tokenUrl, setSmartConfigUrlTestResult, setTestingSmartConfigUrl)
+                }
+                disabled={testingSmartConfigUrl}
+              >
+                {testingSmartConfigUrl ? 'Testing...' : 'Test URL'}
+              </Button>
+            </Box>
+            {smartConfigUrlTestResult && (
+              <Typography
+                variant="caption"
+                sx={{
+                  mt: 0.5,
+                  color: smartConfigUrlTestResult.startsWith('Successfully') ? 'success.main' : 'error.main',
+                }}
+              >
+                {smartConfigUrlTestResult}
+              </Typography>
+            )}
+          </Box>
           <TextField
-            label="FHIR Server URL"
-            value={formData.fhirServerUrl}
-            onChange={handleChange('fhirServerUrl')}
-            fullWidth
-            required
-          />
-          <TextField
-            label="Token URL"
-            value={formData.tokenUrl}
-            onChange={handleChange('tokenUrl')}
-            fullWidth
-            required
-          />
-          <TextField
-            label="App Client ID"
+            label="Client ID"
             value={formData.appClientId}
             onChange={handleChange('appClientId')}
             fullWidth
             required
           />
           <TextField
-            label="App Client Secret"
+            label="Client Secret"
             value={formData.appClientSecret}
             onChange={handleChange('appClientSecret')}
             type={showPassword ? 'text' : 'password'}
