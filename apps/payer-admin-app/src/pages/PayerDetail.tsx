@@ -16,7 +16,7 @@ interface PayerData {
   fhirServerUrl: string;
   appClientId: string;
   appClientSecret: string;
-  tokenUrl: string;
+  smartConfigUrl: string;
   scopes: string | null;
 }
 
@@ -30,7 +30,7 @@ const transformPayer = (payer: Payer): PayerData => ({
   fhirServerUrl: payer.fhir_server_url,
   appClientId: payer.app_client_id,
   appClientSecret: payer.app_client_secret,
-  tokenUrl: payer.token_url,
+  smartConfigUrl: payer.smart_config_url,
   scopes: payer.scopes || null,
 });
 
@@ -52,7 +52,7 @@ export default function PayerDetail() {
     fhirServerUrl: '',
     appClientId: '',
     appClientSecret: '',
-    tokenUrl: '',
+    smartConfigUrl: '',
     scopes: null,
   });
 
@@ -106,7 +106,7 @@ export default function PayerDetail() {
       formData.fhirServerUrl !== payer.fhirServerUrl ||
       formData.appClientId !== payer.appClientId ||
       formData.appClientSecret !== payer.appClientSecret ||
-      formData.tokenUrl !== payer.tokenUrl ||
+      formData.smartConfigUrl !== payer.smartConfigUrl ||
       currentScopes !== originalScopes
     );
   }, [formData, payer, scopeChips]);
@@ -177,7 +177,7 @@ export default function PayerDetail() {
         fhir_server_url: formData.fhirServerUrl,
         app_client_id: formData.appClientId,
         app_client_secret: formData.appClientSecret,
-        token_url: formData.tokenUrl,
+        smart_config_url: formData.smartConfigUrl,
         scopes: scopesValue,
       });
       
@@ -411,8 +411,8 @@ export default function PayerDetail() {
             <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
               <TextField
                 label="SMART on FHIR Config URL"
-                value={formData.tokenUrl}
-                onChange={handleChange('tokenUrl')}
+                value={formData.smartConfigUrl}
+                onChange={handleChange('smartConfigUrl')}
                 fullWidth
                 required
                 sx={{ flex: 1 }}
@@ -421,7 +421,7 @@ export default function PayerDetail() {
                 variant="outlined"
                 size="small"
                 onClick={() =>
-                  testUrl(formData.tokenUrl, setSmartConfigUrlTestResult, setTestingSmartConfigUrl)
+                  testUrl(formData.smartConfigUrl, setSmartConfigUrlTestResult, setTestingSmartConfigUrl)
                 }
                 disabled={testingSmartConfigUrl}
               >
