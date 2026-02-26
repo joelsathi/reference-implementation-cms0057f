@@ -51,6 +51,11 @@ export default function QuestionnaireDetail() {
   const [formData, setFormData] = useState<Questionnaire>({
     resourceType: 'Questionnaire',
     id: questionnaireId || generateUUID(),
+    meta: {
+      versionId: '1',
+      lastUpdated: new Date().toISOString(),
+      profile: ['http://hl7.org/fhir/StructureDefinition/Questionnaire'],
+    },
     url: `urn:uuid:${questionnaireId || generateUUID()}`,
     title: '',
     status: 'draft',
