@@ -40,7 +40,7 @@ class QuestionnairesAPI {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       ...options,
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/fhir+json',
         ...options?.headers,
       },
     });
@@ -57,7 +57,7 @@ class QuestionnairesAPI {
       throw error;
     }
 
-    if (response.status === 204) {
+    if (response.status === 204 || response.status === 201) {
       return undefined as T;
     }
 
