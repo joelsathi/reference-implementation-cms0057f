@@ -45,7 +45,7 @@ class QuestionnairesAPI {
       },
     });
 
-    if (!response.ok) {
+    if (!response.ok && response.status !== 201) {
       const error: ErrorPayload = await response.json().catch(() => ({
         timestamp: new Date().toISOString(),
         status: response.status,
