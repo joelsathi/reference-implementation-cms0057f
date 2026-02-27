@@ -168,7 +168,7 @@ export default function PayerDetail() {
 
     try {
       setUpdating(true);
-      const scopesValue = scopeChips.length > 0 ? scopeChips.join(' ') : undefined;
+      const scopesValue = scopeChips.length > 0 ? scopeChips.join(' ') : null;
       await payersAPI.updatePayer(payerId, {
         name: formData.name,
         email: formData.email,

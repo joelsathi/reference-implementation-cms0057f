@@ -50,7 +50,7 @@ const transformPayerData = (data: PayerData) => ({
   app_client_id: data.appClientId,
   app_client_secret: data.appClientSecret,
   smart_config_url: data.smartConfigUrl,
-  scopes: data.scopes || undefined,
+  scopes: data.scopes || null,
 });
 
 export default function Payers() {

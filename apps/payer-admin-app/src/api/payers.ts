@@ -9,7 +9,7 @@ export interface PayerFormData {
   app_client_id: string;
   app_client_secret: string;
   smart_config_url: string;
-  scopes?: string;
+  scopes: string | null;
 }
 
 export interface Payer extends PayerFormData {
