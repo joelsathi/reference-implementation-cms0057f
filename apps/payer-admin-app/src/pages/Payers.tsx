@@ -204,7 +204,7 @@ export default function Payers() {
           startIcon={
             <Plus 
               size={18} 
-              strokeWidth={20}
+              strokeWidth={3}
               style={{ fontWeight: 'bold' }}
             />
           }

@@ -234,7 +234,7 @@ export default function Questionnaires() {
             startIcon={
               <Plus 
                 size={18} 
-                strokeWidth={20}
+                strokeWidth={3}
                 style={{ fontWeight: 'bold' }}
               />
             }
