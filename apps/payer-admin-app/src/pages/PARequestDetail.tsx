@@ -33,16 +33,16 @@ import {
 import {
   ArrowLeft,
   CheckCircle,
-  XCircle,
+  // XCircle,
   Download,
   FileText,
   Image as ImageIcon,
   ChevronDown,
   User,
-  AlertCircle,
+  // AlertCircle,
   Activity,
   FileCheck,
-  Sparkles,
+  // Sparkles,
   Calendar,
   ClipboardList,
   Package,
@@ -54,7 +54,7 @@ import {
 import type {
   AdjudicationCode,
   DocumentReference,
-  AIAnalysis,
+  // AIAnalysis,
 } from '../types/claimItem';
 import {
   AdjudicationCodeDisplay,
@@ -426,6 +426,8 @@ export default function PARequestDetail() {
   };
 
   // Render AI Analysis for items with questionnaire responses
+  // Temporarily commented out - AI Analysis feature disabled
+  /*
   const renderAIAnalysis = (aiAnalysis?: AIAnalysis) => {
     if (!aiAnalysis) return null;
 
@@ -465,7 +467,6 @@ export default function PARequestDetail() {
             </Typography>
           </Box>
 
-          {/* Recommendation Alert */}
           <Alert
             severity={getRecommendationColor(aiAnalysis.recommendation)}
             icon={getRecommendationIcon(aiAnalysis.recommendation)}
@@ -481,12 +482,10 @@ export default function PARequestDetail() {
             </Box>
           </Alert>
 
-          {/* Summary */}
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             {aiAnalysis.summary}
           </Typography>
 
-          {/* Criteria Matches */}
           {aiAnalysis.criteriaMatches && aiAnalysis.criteriaMatches.length > 0 && (
             <Accordion sx={{ mb: 1, '&:before': { display: 'none' } }}>
               <AccordionSummary expandIcon={<ChevronDown size={18} />} sx={{ minHeight: 40, '& .MuiAccordionSummary-content': { my: 1 } }}>
@@ -520,7 +519,6 @@ export default function PARequestDetail() {
             </Accordion>
           )}
 
-          {/* Risk Level & Policy Reference */}
           <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mt: 1 }}>
             {aiAnalysis.riskLevel && (
               <Chip
@@ -542,6 +540,7 @@ export default function PARequestDetail() {
       </Box>
     );
   };
+  */
 
   return (
     <Box sx={{ p: 4, maxWidth: 1400, mx: 'auto' }}>
@@ -949,21 +948,27 @@ export default function PARequestDetail() {
                         <Typography sx={{ fontWeight: 600 }}>
                           {getQuestionnaireName(qr.questionnaire)}
                         </Typography>
-                        <Chip
-                          label={`${qr.analysis.recommendation.toUpperCase()}`}
-                          size="small"
-                          color={
-                            qr.analysis.recommendation === 'approve'
-                              ? 'success'
-                              : qr.analysis.recommendation === 'deny'
-                              ? 'error'
-                              : 'warning'
-                          }
-                        />
+                        {/* AI Recommendation - Hidden for now */}
+                        {/* {!isProcessedView && (
+                          <Chip
+                            label={`${qr.analysis.recommendation.toUpperCase()}`}
+                            size="small"
+                            color={
+                              qr.analysis.recommendation === 'approve'
+                                ? 'success'
+                                : qr.analysis.recommendation === 'deny'
+                                ? 'error'
+                                : 'warning'
+                            }
+                          />
+                        )} */}
                       </Box>
-                      <Typography variant="caption" color="text.secondary">
-                        Confidence: {qr.analysis.confidenceScore}%
-                      </Typography>
+                      {/* AI Confidence - Hidden for now */}
+                      {/* {!isProcessedView && (
+                        <Typography variant="caption" color="text.secondary">
+                          Confidence: {qr.analysis.confidenceScore}%
+                        </Typography>
+                      )} */}
                     </Box>
                   </AccordionSummary>
                   <AccordionDetails>
@@ -987,8 +992,8 @@ export default function PARequestDetail() {
                         </Stack>
                       </Box>
 
-                      {/* AI Analysis */}
-                      {renderAIAnalysis(qr.analysis)}
+                      {/* AI Analysis - Temporarily Commented Out */}
+                      {/* {renderAIAnalysis(qr.analysis)} */}
                     </Box>
                   </AccordionDetails>
                 </Accordion>
@@ -1220,87 +1225,135 @@ export default function PARequestDetail() {
                       )}
                     </Box>
 
-                    {/* Item Adjudication Controls - Below content */}
+                    {/* Item Adjudication Controls/Display - Below content */}
                     <Divider />
-                    <Paper sx={{ p: 2, bgcolor: 'background.default' }}>
-                      <Typography variant="subtitle2" sx={{ display: 'flex', alignItems: 'center', gap: 1, fontWeight: 600, mb: 2 }}>
-                        Item Adjudication
-                      </Typography>
-
-                      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 2fr auto' }, gap: 2, alignItems: 'start' }}>
-                        {/* Adjudication Code Select */}
-                        <FormControl fullWidth size="small">
-                          <InputLabel>Adjudication Category</InputLabel>
-                          <Select
-                            value={item.selectedAdjudicationCode || ''}
-                            label="Adjudication Category"
-                            onChange={(e) => updateItemAdjudication(item.sequence, 'selectedAdjudicationCode', e.target.value as AdjudicationCode)}
-                          >
-                            {ADJUDICATION_CODES.map((code) => (
-                              <MenuItem key={code} value={code}>
-                                <Tooltip title={AdjudicationCodeDescription[code]} placement="right">
-                                  <Box sx={{ width: '100%' }}>
-                                    {AdjudicationCodeDisplay[code]}
-                                  </Box>
-                                </Tooltip>
-                              </MenuItem>
+                    
+                    {/* Show full adjudication controls for pending items, or just display for processed */}
+                    {isProcessedView ? (
+                      // Processed View - Display Only
+                      <Paper sx={{ p: 2, bgcolor: 'background.default' }}>
+                        <Typography variant="subtitle2" sx={{ display: 'flex', alignItems: 'center', gap: 1, fontWeight: 600, mb: 2 }}>
+                          Adjudication Decision
+                        </Typography>
+                        
+                        {item.adjudication && item.adjudication.length > 0 ? (
+                          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                            {(item.adjudication as Array<{ category?: { coding?: Array<{ display?: string; code?: string }> }; amount?: { value?: number; currency?: string } }>).map((adj, idx) => (
+                              <Box key={idx} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <Box>
+                                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                    {adj.category?.coding?.[0]?.display || adj.category?.coding?.[0]?.code || 'N/A'}
+                                  </Typography>
+                                  <Typography variant="caption" color="text.secondary">
+                                    {adj.category?.coding?.[0]?.code}
+                                  </Typography>
+                                </Box>
+                                {adj.amount && (
+                                  <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                                    ${adj.amount.value?.toLocaleString() || '0'} {adj.amount.currency || 'USD'}
+                                  </Typography>
+                                )}
+                              </Box>
                             ))}
-                          </Select>
-                        </FormControl>
-
-                        {/* Amount/Percentage Input */}
-                        {item.selectedAdjudicationCode === 'eligpercent' ? (
-                          <TextField
-                            fullWidth
-                            size="small"
-                            label="Eligible Percentage"
-                            type="number"
-                            value={item.adjudicationPercent || ''}
-                            onChange={(e) => updateItemAdjudication(item.sequence, 'adjudicationPercent', parseFloat(e.target.value) || 0)}
-                            InputProps={{
-                              endAdornment: <InputAdornment position="end">%</InputAdornment>,
-                            }}
-                            inputProps={{ min: 0, max: 100 }}
-                          />
+                            {item.reviewNote && (
+                              <Box sx={{ mt: 1, p: 2, bgcolor: 'background.paper', borderRadius: 1, border: 1, borderColor: 'divider' }}>
+                                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                                  Review Note:
+                                </Typography>
+                                <Typography variant="body2" sx={{ mt: 0.5 }}>
+                                  {item.reviewNote}
+                                </Typography>
+                              </Box>
+                            )}
+                          </Box>
                         ) : (
+                          <Typography variant="body2" color="text.secondary">
+                            No adjudication data available
+                          </Typography>
+                        )}
+                      </Paper>
+                    ) : (
+                      // Pending View - Full Controls
+                      <Paper sx={{ p: 2, bgcolor: 'background.default' }}>
+                        <Typography variant="subtitle2" sx={{ display: 'flex', alignItems: 'center', gap: 1, fontWeight: 600, mb: 2 }}>
+                          Item Adjudication
+                        </Typography>
+
+                        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 2fr auto' }, gap: 2, alignItems: 'start' }}>
+                          {/* Adjudication Code Select */}
+                          <FormControl fullWidth size="small">
+                            <InputLabel>Adjudication Category</InputLabel>
+                            <Select
+                              value={item.selectedAdjudicationCode || ''}
+                              label="Adjudication Category"
+                              onChange={(e) => updateItemAdjudication(item.sequence, 'selectedAdjudicationCode', e.target.value as AdjudicationCode)}
+                            >
+                              {ADJUDICATION_CODES.map((code) => (
+                                <MenuItem key={code} value={code}>
+                                  <Tooltip title={AdjudicationCodeDescription[code]} placement="right">
+                                    <Box sx={{ width: '100%' }}>
+                                      {AdjudicationCodeDisplay[code]}
+                                    </Box>
+                                  </Tooltip>
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
+
+                          {/* Amount/Percentage Input */}
+                          {item.selectedAdjudicationCode === 'eligpercent' ? (
+                            <TextField
+                              fullWidth
+                              size="small"
+                              label="Eligible Percentage"
+                              type="number"
+                              value={item.adjudicationPercent || ''}
+                              onChange={(e) => updateItemAdjudication(item.sequence, 'adjudicationPercent', parseFloat(e.target.value) || 0)}
+                              InputProps={{
+                                endAdornment: <InputAdornment position="end">%</InputAdornment>,
+                              }}
+                              inputProps={{ min: 0, max: 100 }}
+                            />
+                          ) : (
+                            <TextField
+                              fullWidth
+                              size="small"
+                              label="Amount"
+                              type="number"
+                              value={item.adjudicationAmount || ''}
+                              onChange={(e) => updateItemAdjudication(item.sequence, 'adjudicationAmount', parseFloat(e.target.value) || 0)}
+                              InputProps={{
+                                startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                              }}
+                            />
+                          )}
+
+                          {/* Item Review Note */}
                           <TextField
                             fullWidth
                             size="small"
-                            label="Amount"
-                            type="number"
-                            value={item.adjudicationAmount || ''}
-                            onChange={(e) => updateItemAdjudication(item.sequence, 'adjudicationAmount', parseFloat(e.target.value) || 0)}
-                            InputProps={{
-                              startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                            }}
+                            multiline
+                            rows={2}
+                            label="Item Review Note"
+                            placeholder="Enter note for this specific item..."
+                            value={item.itemReviewNote}
+                            onChange={(e) => updateItemAdjudication(item.sequence, 'itemReviewNote', e.target.value)}
                           />
-                        )}
 
-                        {/* Item Review Note */}
-                        <TextField
-                          fullWidth
-                          size="small"
-                          multiline
-                          rows={2}
-                          label="Item Review Note"
-                          placeholder="Enter note for this specific item..."
-                          value={item.itemReviewNote}
-                          onChange={(e) => updateItemAdjudication(item.sequence, 'itemReviewNote', e.target.value)}
-                        />
-
-                        {/* Mark as Reviewed Toggle */}
-                        {(paRequest.status === 'queued' || paRequest.status === 'partial') && <Button
-                          variant={item.isReviewed ? 'contained' : 'outlined'}
-                          color={item.isReviewed ? 'success' : 'primary'}
-                          startIcon={item.isReviewed ? <CheckCircle size={18} /> : undefined}
-                          onClick={() => updateItemAdjudication(item.sequence, 'isReviewed', !item.isReviewed)}
-                          sx={{ minWidth: 160, height: 40 }}
-                        >
-                          {item.isReviewed ? 'Reviewed' : 'Mark as Reviewed'}
-                        </Button>
-                        }
-                      </Box>
-                    </Paper>
+                          {/* Mark as Reviewed Toggle */}
+                          {(paRequest.status === 'queued' || paRequest.status === 'partial') && <Button
+                            variant={item.isReviewed ? 'contained' : 'outlined'}
+                            color={item.isReviewed ? 'success' : 'primary'}
+                            startIcon={item.isReviewed ? <CheckCircle size={18} /> : undefined}
+                            onClick={() => updateItemAdjudication(item.sequence, 'isReviewed', !item.isReviewed)}
+                            sx={{ minWidth: 160, height: 40 }}
+                          >
+                            {item.isReviewed ? 'Reviewed' : 'Mark as Reviewed'}
+                          </Button>
+                          }
+                        </Box>
+                      </Paper>
+                    )}
                   </Box>
                 </AccordionDetails>
               </Accordion>
