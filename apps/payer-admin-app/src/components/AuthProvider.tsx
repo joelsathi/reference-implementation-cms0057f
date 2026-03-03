@@ -9,6 +9,12 @@ import { AuthContext } from "./AuthContext";
 import type { UserInfo } from "./AuthContext";
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const capitalizeWords = (str: string): string => {
+    return str.split(' ').map(word => 
+      word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+    ).join(' ');
+  };
+
   const location = useLocation();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
@@ -29,8 +35,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           const loggedUser = await response.json();
           setUserInfo({
             username: loggedUser.username ?? "User",
-            first_name: loggedUser.given_name ?? "User",
-            last_name: loggedUser.family_name ?? "",
+            first_name: capitalizeWords(loggedUser.given_name ?? "User"),
+            last_name: capitalizeWords(loggedUser.family_name ?? ""),
             id: loggedUser.id ?? "ID-12302",
           });
           setIsAuthenticated(true);
@@ -70,8 +76,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const loggedUser = await response.json();
         setUserInfo({
           username: loggedUser.username,
-          first_name: loggedUser.first_name,
-          last_name: loggedUser.last_name,
+          first_name: capitalizeWords(loggedUser.first_name || ""),
+          last_name: capitalizeWords(loggedUser.last_name || ""),
           id: loggedUser.id,
         });
         setIsAuthenticated(true);
