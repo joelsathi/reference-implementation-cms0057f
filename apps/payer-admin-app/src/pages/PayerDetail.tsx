@@ -388,7 +388,7 @@ export default function PayerDetail() {
                 variant="outlined"
                 size="small"
                 onClick={() =>
-                  testUrl(formData.fhirServerUrl, setFhirUrlTestResult, setTestingFhirUrl)
+                  testUrl(formData.fhirServerUrl + "/metadata", setFhirUrlTestResult, setTestingFhirUrl)
                 }
                 disabled={testingFhirUrl}
               >
@@ -421,7 +421,7 @@ export default function PayerDetail() {
                 variant="outlined"
                 size="small"
                 onClick={() =>
-                  testUrl(formData.smartConfigUrl, setSmartConfigUrlTestResult, setTestingSmartConfigUrl)
+                  testUrl(formData.smartConfigUrl + "/.well-known/smart-configuration", setSmartConfigUrlTestResult, setTestingSmartConfigUrl)
                 }
                 disabled={testingSmartConfigUrl}
               >
