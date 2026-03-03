@@ -122,15 +122,34 @@ const formatDate = (dateString: string | undefined): string => {
 };
 
 // Initialize claim items with adjudication state
-const initializeItemsWithState = (items: ClaimItem[]): ClaimItemWithAdjudication[] => {
-  return items.map((item) => ({
-    ...item,
-    selectedAdjudicationCode: undefined,
-    adjudicationAmount: (item.net as { value: number })?.value,
-    adjudicationPercent: undefined,
-    itemReviewNote: '',
-    isReviewed: false,
-  }));
+const initializeItemsWithState = (items: ClaimItem[], status?: string): ClaimItemWithAdjudication[] => {
+  return items.map((item) => {
+    // Extract adjudication data from existing adjudication array
+    const adjudicationEntries = (item.adjudication || []) as Array<{
+      category?: { coding?: Array<{ code?: string; display?: string }> };
+      amount?: { value?: number; currency?: string };
+    }>;
+
+    // Find the benefit entry or the first entry with an amount
+    const benefitEntry = adjudicationEntries.find(
+      (adj) => adj.category?.coding?.[0]?.code === 'benefit'
+    );
+    const entryWithAmount = adjudicationEntries.find((adj) => adj.amount);
+    const primaryEntry = benefitEntry || entryWithAmount || adjudicationEntries[0];
+
+    const selectedCode = primaryEntry?.category?.coding?.[0]?.code;
+    const amount = (benefitEntry || entryWithAmount)?.amount?.value ?? (item.net as { value: number })?.value;
+    const isComplete = status === 'complete';
+
+    return {
+      ...item,
+      selectedAdjudicationCode: selectedCode,
+      adjudicationAmount: amount,
+      adjudicationPercent: undefined,
+      itemReviewNote: item.reviewNote || '',
+      isReviewed: isComplete || adjudicationEntries.length > 0,
+    };
+  });
 };
 
 export default function PARequestDetail() {
@@ -162,7 +181,7 @@ export default function PARequestDetail() {
       try {
         const response = await paRequestsAPI.getPARequestDetail(requestId);
         setPaRequest(response);
-        setClaimItems(initializeItemsWithState(response.items));
+        setClaimItems(initializeItemsWithState(response.items, response.status));
       } catch (err) {
         console.error('Error fetching PA request detail:', err);
         setError('Failed to load PA request details. Please try again.');
@@ -174,8 +193,9 @@ export default function PARequestDetail() {
     fetchPARequestDetail();
   }, [requestId]);
 
-  // Check if we're coming from the processed page
-  const isProcessedView = location.pathname.includes('/processed/');
+  // Check if we're coming from the processed page or if the request is already complete
+  const isFromProcessedPage = location.pathname.includes('processed');
+  const isProcessedView = isFromProcessedPage || paRequest?.status === 'complete';
 
   const updateItemAdjudication = useCallback((
     sequence: number,
@@ -204,7 +224,7 @@ export default function PARequestDetail() {
   }
 
   const handleBack = () => {
-    if (isProcessedView) {
+    if (isFromProcessedPage) {
       navigate('/pa-requests/processed');
     } else {
       navigate('/pa-requests');
@@ -551,7 +571,7 @@ export default function PARequestDetail() {
         sx={{ mb: 3 }}
         variant="text"
       >
-        {isProcessedView ? 'Back to Processed Requests' : 'Back to Pending Requests'}
+        {isFromProcessedPage ? 'Back to Processed Requests' : 'Back to Pending Requests'}
       </Button>
 
       {/* Loading State */}
