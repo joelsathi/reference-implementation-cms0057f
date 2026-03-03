@@ -1289,7 +1289,7 @@ export default function PARequestDetail() {
                         />
 
                         {/* Mark as Reviewed Toggle */}
-                        <Button
+                        {(paRequest.status === 'queued' || paRequest.status === 'partial') && <Button
                           variant={item.isReviewed ? 'contained' : 'outlined'}
                           color={item.isReviewed ? 'success' : 'primary'}
                           startIcon={item.isReviewed ? <CheckCircle size={18} /> : undefined}
@@ -1298,6 +1298,7 @@ export default function PARequestDetail() {
                         >
                           {item.isReviewed ? 'Reviewed' : 'Mark as Reviewed'}
                         </Button>
+                        }
                       </Box>
                     </Paper>
                   </Box>

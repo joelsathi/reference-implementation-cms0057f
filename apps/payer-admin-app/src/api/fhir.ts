@@ -68,7 +68,7 @@ function mapFhirPatientToInfo(fhirPatient: FhirPatient): PatientInfo {
  * Fetch patient information from FHIR server
  */
 export async function getPatient(patientId: string): Promise<PatientInfo> {
-  const response = await fetch(`${API_BASE_URL}/Patient/${patientId}`);
+  const response = await fetch(`${API_BASE_URL}/patients/${patientId}`);
 
   if (!response.ok) {
     throw new Error(`Failed to fetch patient: ${response.statusText}`);
