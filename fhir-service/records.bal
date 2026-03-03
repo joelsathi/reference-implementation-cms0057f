@@ -62,6 +62,7 @@ public enum ResourceType {
     ORGANIZATION = "Organization",
     PATIENT = "Patient",
     PRACTITIONER = "Practitioner",
+    PRACTITIONER_ROLE = "PractitionerRole",
     PROCEDURE = "Procedure",
     QUESTIONNAIRE = "Questionnaire",
     QUESTIONNAIRE_PACKAGE = "QuestionnairePackage",
