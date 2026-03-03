@@ -29,8 +29,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           const loggedUser = await response.json();
           setUserInfo({
             username: loggedUser.username ?? "User",
-            first_name: loggedUser.first_name ?? "User",
-            last_name: loggedUser.last_name ?? "",
+            first_name: loggedUser.given_name ?? "User",
+            last_name: loggedUser.family_name ?? "",
             id: loggedUser.id ?? "ID-12302",
           });
           setIsAuthenticated(true);
