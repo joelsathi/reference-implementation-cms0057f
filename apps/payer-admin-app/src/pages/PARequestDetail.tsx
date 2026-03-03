@@ -861,7 +861,7 @@ export default function PARequestDetail() {
               </Typography>
             </Box>
             <Typography variant="body2" color="text.secondary">
-              Total Submitted: ${claimItems.reduce((sum, item) => sum + ((item.net as { value?: number })?.value || 0), 0).toLocaleString()}
+              Total Submitted: ${claimItems.reduce((sum, item) => sum + ((item.net as { value?: number })?.value || item.unitPrice?.value || 0), 0).toLocaleString()}
             </Typography>
           </Box>
 
@@ -900,7 +900,7 @@ export default function PARequestDetail() {
                         : '-'}
                     </TableCell>
                     <TableCell align="right">
-                      ${(item.net?.value || 0).toLocaleString()}
+                      ${(item.net?.value || item.unitPrice?.value || 0).toLocaleString()}
                     </TableCell>
                     <TableCell>
                       {item.selectedAdjudicationCode ? (
@@ -1251,34 +1251,51 @@ export default function PARequestDetail() {
                     {/* Show full adjudication controls for pending items, or just display for processed */}
                     {isProcessedView ? (
                       // Processed View - Display Only
-                      <Paper sx={{ p: 2, bgcolor: 'background.default' }}>
-                        <Typography variant="subtitle2" sx={{ display: 'flex', alignItems: 'center', gap: 1, fontWeight: 600, mb: 2 }}>
+                      <Paper variant="outlined" sx={{ p: 2 }}>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
                           Adjudication Decision
                         </Typography>
                         
                         {item.adjudication && item.adjudication.length > 0 ? (
-                          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                            {(item.adjudication as Array<{ category?: { coding?: Array<{ display?: string; code?: string }> }; amount?: { value?: number; currency?: string } }>).map((adj, idx) => (
-                              <Box key={idx} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <Box>
-                                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                                    {adj.category?.coding?.[0]?.display || adj.category?.coding?.[0]?.code || 'N/A'}
-                                  </Typography>
-                                  <Typography variant="caption" color="text.secondary">
-                                    {adj.category?.coding?.[0]?.code}
-                                  </Typography>
-                                </Box>
-                                {adj.amount && (
-                                  <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                                    ${adj.amount.value?.toLocaleString() || '0'} {adj.amount.currency || 'USD'}
-                                  </Typography>
-                                )}
-                              </Box>
-                            ))}
+                          <Box>
+                            <TableContainer>
+                              <Table size="small">
+                                <TableHead>
+                                  <TableRow sx={{ bgcolor: 'action.hover' }}>
+                                    <TableCell sx={{ fontWeight: 600 }}>Category</TableCell>
+                                    <TableCell sx={{ fontWeight: 600 }} align="right">Amount</TableCell>
+                                  </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                  {(item.adjudication as Array<{ category?: { coding?: Array<{ display?: string; code?: string }> }; amount?: { value?: number; currency?: string } }>)
+                                    .filter((adj) => adj.amount)
+                                    .map((adj, idx) => {
+                                      const code = adj.category?.coding?.[0]?.code;
+                                      const displayName = code && ADJUDICATION_CODES.includes(code as AdjudicationCode)
+                                        ? AdjudicationCodeDisplay[code as AdjudicationCode]
+                                        : adj.category?.coding?.[0]?.display || code || 'N/A';
+                                      return (
+                                        <TableRow key={idx}>
+                                          <TableCell>
+                                            <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                              {displayName}
+                                            </Typography>
+                                          </TableCell>
+                                          <TableCell align="right">
+                                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                              ${adj.amount?.value?.toLocaleString() || '0'} {adj.amount?.currency || 'USD'}
+                                            </Typography>
+                                          </TableCell>
+                                        </TableRow>
+                                      );
+                                    })}
+                                </TableBody>
+                              </Table>
+                            </TableContainer>
                             {item.reviewNote && (
-                              <Box sx={{ mt: 1, p: 2, bgcolor: 'background.paper', borderRadius: 1, border: 1, borderColor: 'divider' }}>
+                              <Box sx={{ mt: 2, p: 1.5, bgcolor: 'action.hover', borderRadius: 1 }}>
                                 <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
-                                  Review Note:
+                                  Review Note
                                 </Typography>
                                 <Typography variant="body2" sx={{ mt: 0.5 }}>
                                   {item.reviewNote}
