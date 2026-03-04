@@ -218,124 +218,127 @@ export default function PayerDataExchangeDetail() {
         </Box>
       </Box>
 
-      {/* Cards Layout - Member, Payer, and Export Summary in parallel */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: data.syncStatus === 'Finished' && data.exportSummary ? '1fr 1fr 1fr' : '1fr 1fr' }, gap: 3, mb: 3 }}>
-        {/* Patient Information */}
-        <Card>
-          <CardContent>
-            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
-              Member Information
-            </Typography>
-            <Divider sx={{ mb: 2 }} />
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <Box>
-                <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700 }}>
-                  Name
-                </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                  {patient?.name || 'Loading...'}
-                </Typography>
+      {/* Cards Layout - Member and Payer stacked, Export Summary parallel on the right */}
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: data.syncStatus === 'Finished' && data.exportSummary ? '1fr 1fr' : '1fr' }, gap: 3, mb: 3 }}>
+        {/* Left Column - Member and Payer Information stacked */}
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          {/* Patient Information */}
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+                Member Information
+              </Typography>
+              <Divider sx={{ mb: 2 }} />
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+                <Box>
+                  <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700 }}>
+                    Name
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                    {patient?.name || 'Loading...'}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700 }}>
+                    Date of Birth
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                    {patient?.dateOfBirth || 'Loading...'}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700 }}>
+                    Member ID
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                    {data.patientId || 'N/A'}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700 }}>
+                    Email
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                    {patient?.email || 'Loading...'}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700 }}>
+                    Phone
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                    {patient?.phone || 'Loading...'}
+                  </Typography>
+                </Box>
               </Box>
-              <Box>
-                <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700 }}>
-                  Date of Birth
-                </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                  {patient?.dateOfBirth || 'Loading...'}
-                </Typography>
-              </Box>
-              <Box>
-                <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700 }}>
-                  Member ID
-                </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                  {data.patientId || 'N/A'}
-                </Typography>
-              </Box>
-              <Box>
-                <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700 }}>
-                  Email
-                </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                  {patient?.email || 'Loading...'}
-                </Typography>
-              </Box>
-              <Box>
-                <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700 }}>
-                  Phone
-                </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                  {patient?.phone || 'Loading...'}
-                </Typography>
-              </Box>
-            </Box>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        {/* Payer Information */}
-        <Card>
-          <CardContent>
-            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
-              Previous Payer Details
-            </Typography>
-            <Divider sx={{ mb: 2 }} />
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <Box>
-                <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700 }}>
-                  Payer Name
-                </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                  {data.payerName || 'N/A'}
-                </Typography>
+          {/* Payer Information */}
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+                Previous Payer Details
+              </Typography>
+              <Divider sx={{ mb: 2 }} />
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+                <Box>
+                  <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700 }}>
+                    Payer Name
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                    {data.payerName || 'N/A'}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700 }}>
+                    Payer ID
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                    {data.payerId || 'N/A'}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700 }}>
+                    State
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                    {data.oldPayerState || 'N/A'}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700 }}>
+                    Coverage ID
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                    {data.oldCoverageId || 'N/A'}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700 }}>
+                    Coverage Start Date
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                    {data.coverageStartDate || 'N/A'}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700 }}>
+                    Coverage End Date
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                    {data.coverageEndDate || 'N/A'}
+                  </Typography>
+                </Box>
               </Box>
-              <Box>
-                <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700 }}>
-                  Payer ID
-                </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                  {data.payerId || 'N/A'}
-                </Typography>
-              </Box>
-              <Box>
-                <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700 }}>
-                  State
-                </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                  {data.oldPayerState || 'N/A'}
-                </Typography>
-              </Box>
-              <Box>
-                <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700 }}>
-                  Coverage ID
-                </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                  {data.oldCoverageId || 'N/A'}
-                </Typography>
-              </Box>
-              <Box>
-                <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700 }}>
-                  Coverage Start Date
-                </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                  {data.coverageStartDate || 'N/A'}
-                </Typography>
-              </Box>
-              <Box>
-                <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700 }}>
-                  Coverage End Date
-                </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                  {data.coverageEndDate || 'N/A'}
-                </Typography>
-              </Box>
-            </Box>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </Box>
 
-        {/* Export Summary - Only show for Finished status */}
+        {/* Right Column - Export Summary (parallel to both cards on left) */}
         {data.syncStatus === 'Finished' && data.exportSummary && (
-          <Card sx={{ maxHeight: '600px', display: 'flex', flexDirection: 'column' }}>
-            <CardContent sx={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', flex: 1 }}>
+          <Card sx={{ display: 'flex', flexDirection: 'column', height: 'fit-content', maxHeight: '100%' }}>
+            <CardContent sx={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', flex: 1, maxHeight: '800px' }}>
               <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
                 Export Summary
               </Typography>
