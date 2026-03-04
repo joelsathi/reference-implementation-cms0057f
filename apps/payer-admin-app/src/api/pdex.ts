@@ -36,7 +36,7 @@ export interface PdexDataRequestAPI {
 // Frontend display structure
 export interface PdexDataRequest {
   exchangeId: string;
-  syncStatus: 'Finished' | 'In Progress' | 'Error' | 'Initiate';
+  syncStatus: 'Finished' | 'In Progress' | 'Error' | 'Pending';
   patientId: string;
   patientName: string;
   payerName: string;
@@ -69,7 +69,7 @@ function mapApiResponseToRequest(apiRequest: PdexDataRequestAPI): PdexDataReques
       break;
     case 'PENDING':
     default:
-      syncStatus = 'Initiate';
+      syncStatus = 'Pending';
       break;
   }
 

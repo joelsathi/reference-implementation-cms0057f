@@ -16,8 +16,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
-  Link,
 } from '@wso2/oxygen-ui';
 import {
   ArrowLeft,
@@ -82,6 +80,18 @@ export default function PayerDataExchangeDetail() {
       await triggerDataExchange(exchangeId);
       // Refresh data after triggering
       const response = await getPdexDataRequest(exchangeId);
+      // Poll in 5 second intervals twice to check for status updates
+      setTimeout(async () => {
+        const updatedResponse = await getPdexDataRequest(exchangeId);
+        setData(updatedResponse);
+      }, 5000);
+      // This is not needed if data exchange completes within 5 seconds
+      if (response.syncStatus === 'In Progress') {
+        setTimeout(async () => {
+          const updatedResponse = await getPdexDataRequest(exchangeId);
+          setData(updatedResponse);
+        }, 10000);
+      }
       setData(response);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to trigger data exchange');
@@ -128,7 +138,7 @@ export default function PayerDataExchangeDetail() {
         return {
           color: 'default' as const,
           icon: <ClockIcon size={20} />,
-          label: 'Initiate',
+          label: 'Pending',
         };
     }
   };
@@ -208,242 +218,207 @@ export default function PayerDataExchangeDetail() {
         </Box>
       </Box>
 
-      {/* Patient Information */}
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
-            Member Information
-          </Typography>
-          <Divider sx={{ mb: 2 }} />
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
-            <Box>
-              <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700 }}>
-                Name
-              </Typography>
-              <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                {patient?.name || 'Loading...'}
-              </Typography>
-            </Box>
-            <Box>
-              <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700 }}>
-                Date of Birth
-              </Typography>
-              <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                {patient?.dateOfBirth || 'Loading...'}
-              </Typography>
-            </Box>
-            <Box>
-              <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700 }}>
-                Member ID
-              </Typography>
-              <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                {data.patientId || 'N/A'}
-              </Typography>
-            </Box>
-            <Box>
-              <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700 }}>
-                Email
-              </Typography>
-              <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                {patient?.email || 'Loading...'}
-              </Typography>
-            </Box>
-            <Box>
-              <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700 }}>
-                Phone
-              </Typography>
-              <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                {patient?.phone || 'Loading...'}
-              </Typography>
-            </Box>
-          </Box>
-        </CardContent>
-      </Card>
-
-      {/* Payer Information */}
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
-            Previous Payer Details
-          </Typography>
-          <Divider sx={{ mb: 2 }} />
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
-            <Box>
-              <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700 }}>
-                Payer Name
-              </Typography>
-              <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                {data.payerName || 'N/A'}
-              </Typography>
-            </Box>
-            <Box>
-              <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700 }}>
-                Payer ID
-              </Typography>
-              <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                {data.payerId || 'N/A'}
-              </Typography>
-            </Box>
-            <Box>
-              <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700 }}>
-                State
-              </Typography>
-              <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                {data.oldPayerState || 'N/A'}
-              </Typography>
-            </Box>
-            <Box>
-              <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700 }}>
-                Coverage ID
-              </Typography>
-              <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                {data.oldCoverageId || 'N/A'}
-              </Typography>
-            </Box>
-            <Box>
-              <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700 }}>
-                Coverage Start Date
-              </Typography>
-              <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                {data.coverageStartDate || 'N/A'}
-              </Typography>
-            </Box>
-            <Box>
-              <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700 }}>
-                Coverage End Date
-              </Typography>
-              <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                {data.coverageEndDate || 'N/A'}
-              </Typography>
-            </Box>
-          </Box>
-        </CardContent>
-      </Card>
-
-      {/* Export Summary - Only show for Finished status */}
-      {data.syncStatus === 'Finished' && data.exportSummary && (
-        <Card sx={{ mb: 3 }}>
+      {/* Cards Layout - Member, Payer, and Export Summary in parallel */}
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: data.syncStatus === 'Finished' && data.exportSummary ? '1fr 1fr 1fr' : '1fr 1fr' }, gap: 3, mb: 3 }}>
+        {/* Patient Information */}
+        <Card>
           <CardContent>
             <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
-              Export Summary
+              Member Information
             </Typography>
             <Divider sx={{ mb: 2 }} />
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2, mb: 3 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <Box>
                 <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700 }}>
-                  Transaction Time
+                  Name
                 </Typography>
                 <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                  {new Date(data.exportSummary.transactionTime).toLocaleString()}
+                  {patient?.name || 'Loading...'}
                 </Typography>
               </Box>
               <Box>
                 <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700 }}>
-                  Request
+                  Date of Birth
                 </Typography>
                 <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                  {data.exportSummary.request}
+                  {patient?.dateOfBirth || 'Loading...'}
+                </Typography>
+              </Box>
+              <Box>
+                <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700 }}>
+                  Member ID
+                </Typography>
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                  {data.patientId || 'N/A'}
+                </Typography>
+              </Box>
+              <Box>
+                <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700 }}>
+                  Email
+                </Typography>
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                  {patient?.email || 'Loading...'}
+                </Typography>
+              </Box>
+              <Box>
+                <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700 }}>
+                  Phone
+                </Typography>
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                  {patient?.phone || 'Loading...'}
                 </Typography>
               </Box>
             </Box>
-            
-            <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600, mt: 2, mb: 1 }}>
-              Exported Resources
+          </CardContent>
+        </Card>
+
+        {/* Payer Information */}
+        <Card>
+          <CardContent>
+            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+              Previous Payer Details
             </Typography>
-            <TableContainer component={Paper} variant="outlined">
-              <Table size="small">
-                <TableHead>
-                  <TableRow sx={{ backgroundColor: 'action.hover' }}>
-                    <TableCell sx={{ fontWeight: 700 }}>Resource Type</TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 700 }}>Count</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>Download URL</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {data.exportSummary.output && data.exportSummary.output.length > 0 ? (
-                    data.exportSummary.output.map((file, index) => (
-                      <TableRow key={index} hover>
-                        <TableCell sx={{ fontWeight: 500 }}>{file.type}</TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 500 }}>
-                          <Chip label={file.count} size="small" color="primary" />
-                        </TableCell>
-                        <TableCell>
-                          <Link
-                            href={file.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            sx={{
-                              fontSize: '0.875rem',
-                              wordBreak: 'break-all',
-                              textDecoration: 'none',
-                              '&:hover': { textDecoration: 'underline' }
-                            }}
-                          >
-                            {file.url}
-                          </Link>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={3} align="center" sx={{ py: 3, color: 'text.secondary' }}>
-                        No exported resources
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-            
-            {data.exportSummary.error && data.exportSummary.error.length > 0 && (
-              <Box sx={{ mt: 3 }}>
-                <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600, color: 'error.main' }}>
-                  Errors
+            <Divider sx={{ mb: 2 }} />
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Box>
+                <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700 }}>
+                  Payer Name
                 </Typography>
-                <TableContainer component={Paper} variant="outlined">
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                  {data.payerName || 'N/A'}
+                </Typography>
+              </Box>
+              <Box>
+                <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700 }}>
+                  Payer ID
+                </Typography>
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                  {data.payerId || 'N/A'}
+                </Typography>
+              </Box>
+              <Box>
+                <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700 }}>
+                  State
+                </Typography>
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                  {data.oldPayerState || 'N/A'}
+                </Typography>
+              </Box>
+              <Box>
+                <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700 }}>
+                  Coverage ID
+                </Typography>
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                  {data.oldCoverageId || 'N/A'}
+                </Typography>
+              </Box>
+              <Box>
+                <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700 }}>
+                  Coverage Start Date
+                </Typography>
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                  {data.coverageStartDate || 'N/A'}
+                </Typography>
+              </Box>
+              <Box>
+                <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700 }}>
+                  Coverage End Date
+                </Typography>
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                  {data.coverageEndDate || 'N/A'}
+                </Typography>
+              </Box>
+            </Box>
+          </CardContent>
+        </Card>
+
+        {/* Export Summary - Only show for Finished status */}
+        {data.syncStatus === 'Finished' && data.exportSummary && (
+          <Card sx={{ maxHeight: '600px', display: 'flex', flexDirection: 'column' }}>
+            <CardContent sx={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', flex: 1 }}>
+              <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+                Export Summary
+              </Typography>
+              <Divider sx={{ mb: 2 }} />
+              <Box sx={{ mb: 3 }}>
+                <Box>
+                  <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700 }}>
+                    Transaction Time
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                    {new Date(data.exportSummary.transactionTime).toLocaleString()}
+                  </Typography>
+                </Box>
+              </Box>
+              
+              <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600, mb: 1 }}>
+                Exported Resources
+              </Typography>
+              <Box sx={{ overflow: 'auto', flex: 1 }}>
+                <TableContainer>
                   <Table size="small">
                     <TableHead>
-                      <TableRow sx={{ backgroundColor: 'error.lighter' }}>
-                        <TableCell sx={{ fontWeight: 700 }}>Resource Type</TableCell>
+                      <TableRow sx={{ backgroundColor: 'action.hover' }}>
+                        <TableCell sx={{ fontWeight: 700 }}>Type</TableCell>
                         <TableCell align="right" sx={{ fontWeight: 700 }}>Count</TableCell>
-                        <TableCell sx={{ fontWeight: 700 }}>URL</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {data.exportSummary.error.map((file, index) => (
-                        <TableRow key={index} hover>
-                          <TableCell sx={{ fontWeight: 500 }}>{file.type}</TableCell>
-                          <TableCell align="right" sx={{ fontWeight: 500 }}>
-                            <Chip label={file.count} size="small" color="error" />
-                          </TableCell>
-                          <TableCell>
-                            <Link
-                              href={file.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              sx={{
-                                fontSize: '0.875rem',
-                                wordBreak: 'break-all',
-                                textDecoration: 'none',
-                                '&:hover': { textDecoration: 'underline' }
-                              }}
-                            >
-                              {file.url}
-                            </Link>
+                      {data.exportSummary.output && data.exportSummary.output.length > 0 ? (
+                        data.exportSummary.output.map((file, index) => (
+                          <TableRow key={index} hover>
+                            <TableCell sx={{ fontWeight: 500 }}>{file.type}</TableCell>
+                            <TableCell align="right" sx={{ fontWeight: 500 }}>
+                              {file.count}
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={2} align="center" sx={{ py: 3, color: 'text.secondary' }}>
+                            No exported resources
                           </TableCell>
                         </TableRow>
-                      ))}
+                      )}
                     </TableBody>
                   </Table>
                 </TableContainer>
+                
+                {data.exportSummary.error && data.exportSummary.error.length > 0 && (
+                  <Box sx={{ mt: 3 }}>
+                    <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600, color: 'error.main' }}>
+                      Errors
+                    </Typography>
+                    <TableContainer>
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow sx={{ backgroundColor: 'error.lighter' }}>
+                            <TableCell sx={{ fontWeight: 700 }}>Type</TableCell>
+                            <TableCell align="right" sx={{ fontWeight: 700 }}>Count</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {data.exportSummary.error.map((file, index) => (
+                            <TableRow key={index} hover>
+                              <TableCell sx={{ fontWeight: 500 }}>{file.type}</TableCell>
+                              <TableCell align="right" sx={{ fontWeight: 500 }}>
+                                {file.count}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </Box>
+                )}
               </Box>
-            )}
-          </CardContent>
-        </Card>
-      )}
+            </CardContent>
+          </Card>
+        )}
+      </Box>
 
       {/* Initiate Button */}
-      {data.syncStatus === 'Initiate' && (
+      {data.syncStatus === 'Pending' && (
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 3 }}>
           <Button
             variant="contained"
