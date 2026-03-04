@@ -23,7 +23,7 @@ import {
   Pagination,
   Alert,
 } from '@wso2/oxygen-ui';
-import { Search, ListFilter } from '@wso2/oxygen-ui-icons-react';
+import { Search, ListFilter, RefreshCw } from '@wso2/oxygen-ui-icons-react';
 import { getPdexDataRequests, type PdexDataRequest } from '../api/pdex';
 import LoadingTableSkeleton from '../components/LoadingTableSkeleton';
 
@@ -43,23 +43,24 @@ export default function PayerDataExchange() {
   const [error, setError] = useState<string | null>(null);
 
   // Fetch data from API
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const offset = (page - 1) * ITEMS_PER_PAGE;
-        const response = await getPdexDataRequests(ITEMS_PER_PAGE, offset);
-        setRequests(response.results);
-        setTotalCount(response.count);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch data');
-      } finally {
-        setLoading(false);
-      }
-    };
+  const handleRefresh = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const offset = (page - 1) * ITEMS_PER_PAGE;
+      const response = await getPdexDataRequests(ITEMS_PER_PAGE, offset);
+      setRequests(response.results);
+      setTotalCount(response.count);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch data');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchData();
+  useEffect(() => {
+    handleRefresh();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
 
   // Show loading while checking authentication
@@ -316,7 +317,7 @@ export default function PayerDataExchange() {
       )}
 
       {/* Search and Filter */}
-      <Box sx={{ mb: 2 }}>
+      <Box sx={{ mb: 2, display: 'flex', gap: 2 }}>
         <TextField
           fullWidth
           placeholder="Search by Payer"
@@ -349,6 +350,14 @@ export default function PayerDataExchange() {
             ),
           }}
         />
+        <Button
+          variant="outlined"
+          onClick={handleRefresh}
+          disabled={loading}
+          sx={{ minWidth: 'auto', px: 2 }}
+        >
+          <RefreshCw size={20} />
+        </Button>
         <Menu
           anchorEl={filterAnchorEl}
           open={Boolean(filterAnchorEl)}
