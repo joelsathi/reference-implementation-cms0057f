@@ -1,6 +1,22 @@
 // PDEX Data Exchange API Client
 const API_BASE_URL = window.config?.PDEX_API_URL || 'http://localhost:8091/pdex';
 
+// Export Summary types
+export interface OutputFile {
+  type: string;
+  url: string;
+  count: number;
+}
+
+export interface ExportSummary {
+  transactionTime: string;
+  request: string;
+  requiresAccessToken: boolean;
+  output: OutputFile[];
+  deleted?: OutputFile[];
+  error?: OutputFile[];
+}
+
 // Backend API response structure
 export interface PdexDataRequestAPI {
   requestId: string;
@@ -14,6 +30,7 @@ export interface PdexDataRequestAPI {
   bulkDataSyncStatus: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED';
   consent: 'GRANTED' | 'DENIED' | 'PENDING';
   createdDate: string;
+  exportSummary?: string;
 }
 
 // Frontend display structure
@@ -31,6 +48,7 @@ export interface PdexDataRequest {
   coverageStartDate?: string;
   coverageEndDate?: string;
   consent: 'GRANTED' | 'DENIED' | 'PENDING';
+  exportSummary?: ExportSummary;
 }
 
 /**
@@ -55,6 +73,16 @@ function mapApiResponseToRequest(apiRequest: PdexDataRequestAPI): PdexDataReques
       break;
   }
 
+  // Parse export summary if available
+  let exportSummary: ExportSummary | undefined;
+  if (apiRequest.exportSummary) {
+    try {
+      exportSummary = JSON.parse(apiRequest.exportSummary);
+    } catch (err) {
+      console.error('Failed to parse export summary:', err);
+    }
+  }
+
   return {
     exchangeId: apiRequest.requestId,
     syncStatus,
@@ -68,6 +96,7 @@ function mapApiResponseToRequest(apiRequest: PdexDataRequestAPI): PdexDataReques
     coverageStartDate: apiRequest.coverageStartDate,
     coverageEndDate: apiRequest.coverageEndDate,
     consent: apiRequest.consent,
+    exportSummary,
   };
 }
 

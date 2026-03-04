@@ -10,6 +10,14 @@ import {
   Divider,
   Chip,
   Alert,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Link,
 } from '@wso2/oxygen-ui';
 import {
   ArrowLeft,
@@ -311,6 +319,128 @@ export default function PayerDataExchangeDetail() {
           </Box>
         </CardContent>
       </Card>
+
+      {/* Export Summary - Only show for Finished status */}
+      {data.syncStatus === 'Finished' && data.exportSummary && (
+        <Card sx={{ mb: 3 }}>
+          <CardContent>
+            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+              Export Summary
+            </Typography>
+            <Divider sx={{ mb: 2 }} />
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2, mb: 3 }}>
+              <Box>
+                <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700 }}>
+                  Transaction Time
+                </Typography>
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                  {new Date(data.exportSummary.transactionTime).toLocaleString()}
+                </Typography>
+              </Box>
+              <Box>
+                <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700 }}>
+                  Request
+                </Typography>
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                  {data.exportSummary.request}
+                </Typography>
+              </Box>
+            </Box>
+            
+            <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600, mt: 2, mb: 1 }}>
+              Exported Resources
+            </Typography>
+            <TableContainer component={Paper} variant="outlined">
+              <Table size="small">
+                <TableHead>
+                  <TableRow sx={{ backgroundColor: 'action.hover' }}>
+                    <TableCell sx={{ fontWeight: 700 }}>Resource Type</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 700 }}>Count</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Download URL</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {data.exportSummary.output && data.exportSummary.output.length > 0 ? (
+                    data.exportSummary.output.map((file, index) => (
+                      <TableRow key={index} hover>
+                        <TableCell sx={{ fontWeight: 500 }}>{file.type}</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 500 }}>
+                          <Chip label={file.count} size="small" color="primary" />
+                        </TableCell>
+                        <TableCell>
+                          <Link
+                            href={file.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            sx={{
+                              fontSize: '0.875rem',
+                              wordBreak: 'break-all',
+                              textDecoration: 'none',
+                              '&:hover': { textDecoration: 'underline' }
+                            }}
+                          >
+                            {file.url}
+                          </Link>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={3} align="center" sx={{ py: 3, color: 'text.secondary' }}>
+                        No exported resources
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+            
+            {data.exportSummary.error && data.exportSummary.error.length > 0 && (
+              <Box sx={{ mt: 3 }}>
+                <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600, color: 'error.main' }}>
+                  Errors
+                </Typography>
+                <TableContainer component={Paper} variant="outlined">
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow sx={{ backgroundColor: 'error.lighter' }}>
+                        <TableCell sx={{ fontWeight: 700 }}>Resource Type</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 700 }}>Count</TableCell>
+                        <TableCell sx={{ fontWeight: 700 }}>URL</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {data.exportSummary.error.map((file, index) => (
+                        <TableRow key={index} hover>
+                          <TableCell sx={{ fontWeight: 500 }}>{file.type}</TableCell>
+                          <TableCell align="right" sx={{ fontWeight: 500 }}>
+                            <Chip label={file.count} size="small" color="error" />
+                          </TableCell>
+                          <TableCell>
+                            <Link
+                              href={file.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              sx={{
+                                fontSize: '0.875rem',
+                                wordBreak: 'break-all',
+                                textDecoration: 'none',
+                                '&:hover': { textDecoration: 'underline' }
+                              }}
+                            >
+                              {file.url}
+                            </Link>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Box>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Initiate Button */}
       {data.syncStatus === 'Initiate' && (
