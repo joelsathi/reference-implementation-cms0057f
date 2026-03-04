@@ -28,7 +28,7 @@ import { getPdexDataRequests, type PdexDataRequest } from '../api/pdex';
 import LoadingTableSkeleton from '../components/LoadingTableSkeleton';
 
 // Constants
-const ITEMS_PER_PAGE = 8;
+const ITEMS_PER_PAGE = 7;
 
 export default function PayerDataExchange() {
   const navigate = useNavigate();
