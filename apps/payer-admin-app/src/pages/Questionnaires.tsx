@@ -22,6 +22,7 @@ import DeleteConfirmationModal from '../components/DeleteConfirmationModal';
 import { generateUUID } from '../types/questionnaire';
 import botIcon from '../assets/images/bot-icon.png';
 import { questionnairesAPI, type QuestionnaireListItem } from '../api/questionnaires';
+import { fileServiceAPI } from '../api/fileService';
 import { useAuth } from '../components/useAuth';
 
 export default function Questionnaires() {
@@ -32,7 +33,9 @@ export default function Questionnaires() {
   const [aiGenerateDialogOpen, setAiGenerateDialogOpen] = useState(false);
   const [selectedPdfFile, setSelectedPdfFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [processingStep, setProcessingStep] = useState(0);
+  const [processingProgress, setProcessingProgress] = useState(0);
+  const [processingMessage, setProcessingMessage] = useState('');
+  const [activeJob, setActiveJob] = useState<{ fileName: string; jobId: string } | null>(null);
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
@@ -75,8 +78,94 @@ export default function Questionnaires() {
       }
     };
 
-    fetchQuestionnaires();
-  }, [searchQuery, currentPage]);
+    if (!isProcessing) {
+      fetchQuestionnaires();
+    }
+  }, [searchQuery, currentPage, isProcessing]);
+
+  // Continuous polling effect for active jobs
+  useEffect(() => {
+    if (!activeJob) return;
+
+    const pollInterval = 5000; // 5 seconds
+    let isMounted = true;
+
+    const checkJobStatus = async () => {
+      if (!activeJob || !isMounted) return;
+
+      try {
+        const jobStatus = await fileServiceAPI.getJobStatus(activeJob.fileName, activeJob.jobId);
+        
+        if (!isMounted) return;
+
+        setProcessingMessage(`Job status: ${jobStatus.status}`);
+        
+        if (jobStatus.status === 'COMPLETED') {
+          setProcessingProgress(100);
+          setProcessingMessage('Job completed! Refreshing questionnaires...');
+          
+          // Wait a moment before refreshing
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          if (!isMounted) return;
+
+          // Clear active job and reset state
+          setActiveJob(null);
+          setIsProcessing(false);
+          setProcessingProgress(0);
+          setProcessingMessage('');
+          setSelectedPdfFile(null);
+          
+          if (pdfInputRef.current) {
+            pdfInputRef.current.value = '';
+          }
+
+          setSnackbar({
+            open: true,
+            message: 'Questionnaires generated successfully!',
+            severity: 'success',
+          });
+          
+          // Refresh questionnaires list
+          setCurrentPage(1);
+        } else if (jobStatus.status === 'FAILED') {
+          setActiveJob(null);
+          setIsProcessing(false);
+          setProcessingProgress(0);
+          setProcessingMessage('');
+          setSnackbar({
+            open: true,
+            message: jobStatus.error_message || 'Job failed',
+            severity: 'error',
+          });
+        } else {
+          // Job still in progress, update progress incrementally
+          setProcessingProgress((prev) => Math.min(prev + 5, 90));
+        }
+      } catch (error) {
+        console.error('Error polling job status:', error);
+        if (isMounted) {
+          setSnackbar({
+            open: true,
+            message: 'Error checking job status',
+            severity: 'error',
+          });
+        }
+      }
+    };
+
+    // Initial check
+    checkJobStatus();
+
+    // Set up polling interval
+    const intervalId = setInterval(checkJobStatus, pollInterval);
+
+    // Cleanup
+    return () => {
+      isMounted = false;
+      clearInterval(intervalId);
+    };
+  }, [activeJob, currentPage]);
 
   const handleCreateQuestionnaire = () => {
     // Generate a random UUID for the new questionnaire
@@ -137,14 +226,6 @@ export default function Questionnaires() {
     return null;
   }
 
-  const processingSteps = [
-    'Processing PDF',
-    'Pre-processing data',
-    'Extracting scenarios',
-    'Creating Questionnaires',
-    'Evaluating Questionnaires',
-  ];
-
   const handlePdfFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file && file.type === 'application/pdf') {
@@ -171,21 +252,35 @@ export default function Questionnaires() {
     // Close dialog and start processing
     setAiGenerateDialogOpen(false);
     setIsProcessing(true);
-    setProcessingStep(0);
+    setProcessingProgress(10);
+    setProcessingMessage('Uploading PDF and starting conversion...');
 
-    // Simulate processing steps
-    for (let i = 0; i < processingSteps.length; i++) {
-      setProcessingStep(i);
-      await new Promise((resolve) => setTimeout(resolve, 2000)); // 2 seconds per step
+    try {
+      // Upload PDF and get job ID
+      const convertResponse = await fileServiceAPI.convertPdf(selectedPdfFile);
+      
+      if (!convertResponse || convertResponse.length === 0) {
+        throw new Error('No conversion response received');
+      }
+
+      const { job_id, file_name } = convertResponse[0];
+      
+      setProcessingProgress(20);
+      setProcessingMessage('PDF uploaded. Processing in background...');
+      
+      // Set active job to trigger continuous polling
+      setActiveJob({ fileName: file_name, jobId: job_id });
+    } catch (error) {
+      console.error('Error generating questionnaires:', error);
+      setIsProcessing(false);
+      setProcessingProgress(0);
+      setProcessingMessage('');
+      setSnackbar({
+        open: true,
+        message: error instanceof Error ? error.message : 'Failed to generate questionnaires. Please try again.',
+        severity: 'error',
+      });
     }
-
-    // TODO: Replace with actual API call to process PDF and generate questionnaire
-    setIsProcessing(false);
-    setSnackbar({
-      open: true,
-      message: 'Questionnaire generated successfully from PDF!',
-      severity: 'success',
-    });
   };
 
   return (
@@ -260,38 +355,23 @@ export default function Questionnaires() {
         />
       </Box>
 
-      {/* Processing Steps Indicator */}
+      {/* Processing Linear Progress Indicator */}
       {isProcessing && (
         <Box sx={{ mb: 3, p: 3, bgcolor: 'action.hover', borderRadius: 2, border: 1, borderColor: 'divider' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
             <CircularProgress size={20} />
             <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-              {processingSteps[processingStep]}
+              {processingMessage}
             </Typography>
           </Box>
           <LinearProgress 
             variant="determinate" 
-            value={(processingStep + 1) / processingSteps.length * 100} 
+            value={processingProgress} 
             sx={{ height: 6, borderRadius: 3 }}
           />
-          <Box sx={{ display: 'flex', gap: 1, mt: 2, flexWrap: 'wrap' }}>
-            {processingSteps.map((step, index) => (
-              <Box
-                key={step}
-                sx={{
-                  px: 1.5,
-                  py: 0.5,
-                  borderRadius: 1,
-                  fontSize: '0.75rem',
-                  bgcolor: index < processingStep ? 'success.main' : index === processingStep ? 'primary.main' : 'action.selected',
-                  color: index <= processingStep ? 'white' : 'text.secondary',
-                  transition: 'all 0.3s ease',
-                }}
-              >
-                {index < processingStep && '✓ '}{step}
-              </Box>
-            ))}
-          </Box>
+          <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+            {processingProgress}% complete
+          </Typography>
         </Box>
       )}
 

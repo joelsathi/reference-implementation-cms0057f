@@ -11,6 +11,7 @@ declare global {
     config?: {
       BFF_URL: string;
       PDEX_API_URL: string;
+      QUESTIONNAIRE_GEN_API_URL: string;
     };
   }
 }
