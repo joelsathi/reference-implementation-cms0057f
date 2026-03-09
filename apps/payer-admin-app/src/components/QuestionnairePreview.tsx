@@ -30,6 +30,40 @@ export default function QuestionnairePreview({ items }: QuestionnairePreviewProp
     }));
   };
 
+  // Helper function to extract value and display from answer options
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const getAnswerOptionValue = (option: any): any => {
+    if (option.valueCoding !== undefined) {
+      return option.valueCoding.code;
+    } else if (option.valueInteger !== undefined) {
+      return option.valueInteger;
+    } else if (option.valueDate !== undefined) {
+      return option.valueDate;
+    } else if (option.valueTime !== undefined) {
+      return option.valueTime;
+    } else if (option.valueString !== undefined) {
+      return option.valueString;
+    }
+    return '';
+  };
+
+  // Helper function to get display text for answer options
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const getAnswerOptionDisplay = (option: any): string => {
+    if (option.valueCoding !== undefined) {
+      return option.valueCoding.display || option.valueCoding.code;
+    } else if (option.valueInteger !== undefined) {
+      return String(option.valueInteger);
+    } else if (option.valueDate !== undefined) {
+      return option.valueDate;
+    } else if (option.valueTime !== undefined) {
+      return option.valueTime;
+    } else if (option.valueString !== undefined) {
+      return option.valueString;
+    }
+    return '';
+  };
+
   const evaluateEnableWhen = (item: QuestionnaireItem): boolean => {
     if (!item.enableWhen || item.enableWhen.length === 0) {
       return true;
@@ -205,25 +239,29 @@ export default function QuestionnairePreview({ items }: QuestionnairePreviewProp
           <>
             {item.repeats ? (
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0, paddingLeft: "0.6vw" }}>
-                {item.answerOption.map((option) => (
-                  <FormControlLabel
-                    key={option.valueCoding?.code}
-                    control={
-                      <Checkbox
-                        checked={Array.isArray(value) && value.includes(option.valueCoding?.code)}
-                        onChange={(e) => {
-                          const currentValues = Array.isArray(value) ? value : [];
-                          const newValues = e.target.checked
-                            ? [...currentValues, option.valueCoding?.code]
-                            : currentValues.filter((v) => v !== option.valueCoding?.code);
-                          handleAnswerChange(item.linkId, newValues);
-                        }}
-                      />
-                    }
-                    label={option.valueCoding?.display || option.valueCoding?.code}
-                    sx={{ my: 0, height: '32px' }}
-                  />
-                ))}
+                {item.answerOption.map((option, index) => {
+                  const optionValue = getAnswerOptionValue(option);
+                  const optionDisplay = getAnswerOptionDisplay(option);
+                  return (
+                    <FormControlLabel
+                      key={optionValue || index}
+                      control={
+                        <Checkbox
+                          checked={Array.isArray(value) && value.includes(optionValue)}
+                          onChange={(e) => {
+                            const currentValues = Array.isArray(value) ? value : [];
+                            const newValues = e.target.checked
+                              ? [...currentValues, optionValue]
+                              : currentValues.filter((v) => v !== optionValue);
+                            handleAnswerChange(item.linkId, newValues);
+                          }}
+                        />
+                      }
+                      label={optionDisplay}
+                      sx={{ my: 0, height: '32px' }}
+                    />
+                  );
+                })}
               </Box>
             ) : (
               <Select
@@ -235,11 +273,15 @@ export default function QuestionnairePreview({ items }: QuestionnairePreviewProp
                 <MenuItem value="">
                   <em>Select an option</em>
                 </MenuItem>
-                {item.answerOption.map((option) => (
-                  <MenuItem key={option.valueCoding?.code} value={option.valueCoding?.code}>
-                    {option.valueCoding?.display || option.valueCoding?.code}
-                  </MenuItem>
-                ))}
+                {item.answerOption.map((option, index) => {
+                  const optionValue = getAnswerOptionValue(option);
+                  const optionDisplay = getAnswerOptionDisplay(option);
+                  return (
+                    <MenuItem key={optionValue || index} value={optionValue}>
+                      {optionDisplay}
+                    </MenuItem>
+                  );
+                })}
               </Select>
             )}
           </>
