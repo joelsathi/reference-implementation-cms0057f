@@ -147,6 +147,14 @@ export interface QuestionnaireInitial {
 }
 
 /**
+ * Expression structure for FHIR expressions (e.g., CQL)
+ */
+export interface Expression {
+  language: string;
+  expression: string;
+}
+
+/**
  * Extension structure for FHIR extensions
  */
 export interface Extension {
@@ -159,6 +167,7 @@ export interface Extension {
   valueCoding?: Coding;
   valueQuantity?: Quantity;
   valueReference?: Reference;
+  valueExpression?: Expression;
 }
 
 /**

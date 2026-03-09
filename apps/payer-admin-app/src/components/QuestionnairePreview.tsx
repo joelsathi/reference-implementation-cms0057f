@@ -173,6 +173,35 @@ export default function QuestionnairePreview({ items }: QuestionnairePreviewProp
           </Typography>
         )}
 
+        {/* CQL Expression Display */}
+        {item.extension && item.extension.some(
+          (ext) => 
+            ext.url === 'http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-initialExpression' &&
+            ext.valueExpression?.language === 'text/cql'
+        ) && (
+          <Box
+            sx={{
+              mb: 1,
+              p: 1.5,
+              bgcolor: 'action.hover',
+              borderRadius: 1,
+              border: 1,
+              borderColor: 'divider',
+            }}
+          >
+            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+              Expression:{' '}
+              <Typography component="span" variant="caption" sx={{ fontFamily: 'monospace', color: 'text.primary' }}>
+                {item.extension.find(
+                  (ext) =>
+                    ext.url === 'http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-initialExpression' &&
+                    ext.valueExpression?.language === 'text/cql'
+                )?.valueExpression?.expression}
+              </Typography>
+            </Typography>
+          </Box>
+        )}
+
         {/* Input based on type */}
         {item.type === 'boolean' && (
           <RadioGroup
