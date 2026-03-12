@@ -359,13 +359,25 @@ export default function PARequestDetail() {
   const handleSaveDraft = async () => {
     if (!requestId) return;
     
+    // Filter items with complete adjudication data
+    const itemsWithAdjudication = claimItems.filter((item) => 
+      item.selectedAdjudicationCode && 
+      (item.adjudicationAmount !== undefined || item.adjudicationPercent !== undefined)
+    );
+    
+    if (itemsWithAdjudication.length === 0) {
+      setError('Please provide adjudication details (category and amount) for at least one item before saving.');
+      return;
+    }
+    
     setSubmitting(true);
+    setError(null);
     try {
       const adjudication = {
         decision: 'partial',
-        itemAdjudications: claimItems.map((item) => ({
+        itemAdjudications: itemsWithAdjudication.map((item) => ({
           sequence: item.sequence,
-          adjudicationCode: item.selectedAdjudicationCode || 'submitted',
+          adjudicationCode: item.selectedAdjudicationCode!,
           approvedAmount: item.adjudicationAmount,
           itemNotes: item.itemReviewNote,
         })),
@@ -388,13 +400,25 @@ export default function PARequestDetail() {
   const handleCompleteReview = async () => {
     if (!requestId) return;
     
+    // Validate that all items have complete adjudication data
+    const itemsWithoutAdjudication = claimItems.filter((item) => 
+      !item.selectedAdjudicationCode || 
+      (item.adjudicationAmount === undefined && item.adjudicationPercent === undefined)
+    );
+    
+    if (itemsWithoutAdjudication.length > 0) {
+      setError(`Please provide complete adjudication details (category and amount) for all items before completing the review. Missing details for item(s): ${itemsWithoutAdjudication.map(i => i.sequence).join(', ')}`);
+      return;
+    }
+    
     setSubmitting(true);
+    setError(null);
     try {
       const adjudication = {
         decision: 'complete',
         itemAdjudications: claimItems.map((item) => ({
           sequence: item.sequence,
-          adjudicationCode: item.selectedAdjudicationCode || 'submitted',
+          adjudicationCode: item.selectedAdjudicationCode!,
           approvedAmount: item.adjudicationAmount,
           itemNotes: item.itemReviewNote,
         })),
@@ -1345,7 +1369,14 @@ export default function PARequestDetail() {
                               label="Eligible Percentage"
                               type="number"
                               value={item.adjudicationPercent || ''}
-                              onChange={(e) => updateItemAdjudication(item.sequence, 'adjudicationPercent', parseFloat(e.target.value) || 0)}
+                              onChange={(e) => {
+                                const value = parseFloat(e.target.value);
+                                if (!isNaN(value) && value >= 0) {
+                                  updateItemAdjudication(item.sequence, 'adjudicationPercent', value);
+                                } else if (e.target.value === '') {
+                                  updateItemAdjudication(item.sequence, 'adjudicationPercent', undefined);
+                                }
+                              }}
                               InputProps={{
                                 endAdornment: <InputAdornment position="end">%</InputAdornment>,
                               }}
@@ -1358,10 +1389,18 @@ export default function PARequestDetail() {
                               label="Amount"
                               type="number"
                               value={item.adjudicationAmount || ''}
-                              onChange={(e) => updateItemAdjudication(item.sequence, 'adjudicationAmount', parseFloat(e.target.value) || 0)}
+                              onChange={(e) => {
+                                const value = parseFloat(e.target.value);
+                                if (!isNaN(value) && value >= 0) {
+                                  updateItemAdjudication(item.sequence, 'adjudicationAmount', value);
+                                } else if (e.target.value === '') {
+                                  updateItemAdjudication(item.sequence, 'adjudicationAmount', undefined);
+                                }
+                              }}
                               InputProps={{
                                 startAdornment: <InputAdornment position="start">$</InputAdornment>,
                               }}
+                              inputProps={{ min: 0 }}
                             />
                           )}
 
