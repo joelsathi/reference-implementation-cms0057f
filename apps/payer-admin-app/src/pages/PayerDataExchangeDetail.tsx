@@ -36,6 +36,7 @@ export default function PayerDataExchangeDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [triggering, setTriggering] = useState(false);
+  const [triggerError, setTriggerError] = useState<string | null>(null);
 
   // Fetch data from API
   useEffect(() => {
@@ -76,6 +77,7 @@ export default function PayerDataExchangeDetail() {
     if (!exchangeId) return;
     
     setTriggering(true);
+    setTriggerError(null); // Clear previous errors
     try {
       await triggerDataExchange(exchangeId);
       // Refresh data after triggering
@@ -94,7 +96,26 @@ export default function PayerDataExchangeDetail() {
       }
       setData(response);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to trigger data exchange');
+      // Extract error message from the response if available
+      let errorMessage = 'Failed to trigger data exchange';
+      if (err instanceof Error) {
+        try {
+          // Try to parse the error message as JSON to get the server error details
+          const errorData = JSON.parse(err.message);
+          errorMessage = errorData.message || errorMessage;
+        } catch {
+          errorMessage = err.message;
+        }
+      }
+      setTriggerError(errorMessage);
+      
+      // Still refetch the data to show updated state
+      try {
+        const response = await getPdexDataRequest(exchangeId);
+        setData(response);
+      } catch (fetchErr) {
+        console.error('Failed to refetch data after error:', fetchErr);
+      }
     } finally {
       setTriggering(false);
     }
@@ -178,6 +199,17 @@ export default function PayerDataExchangeDetail() {
       >
         Back to Payer Data Exchanges
       </Button>
+
+      {/* Error Banner */}
+      {triggerError && (
+        <Alert 
+          severity="error" 
+          onClose={() => setTriggerError(null)}
+          sx={{ mb: 3 }}
+        >
+          {triggerError}
+        </Alert>
+      )}
 
       {/* Header */}
       <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
