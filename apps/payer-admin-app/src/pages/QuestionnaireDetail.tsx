@@ -200,17 +200,18 @@ export default function QuestionnaireDetail() {
       if (isNewQuestionnaire) {
         // Create new questionnaire with all fields from formData (includes hardcoded profile)
         result = await questionnairesAPI.createQuestionnaire(formData);
-        setOriginalQuestionnaire(result);
-        // Extract editable fields from the result
+        // Fall back to the submitted formData if the API returns no body (201/204)
+        const savedNew = result ?? formData;
+        setOriginalQuestionnaire(savedNew);
         setFormData({
-          ...result,
-          title: result.title,
-          description: result.description,
-          status: result.status,
-          item: result.item || [],
+          ...savedNew,
+          title: savedNew.title,
+          description: savedNew.description,
+          status: savedNew.status,
+          item: savedNew.item || [],
         });
         // Update URL to remove isNew state
-        navigate(`/questionnaires/${result.id}`, { replace: true });
+        navigate(`/questionnaires/${savedNew.id}`, { replace: true });
       } else if (questionnaireId && originalQuestionnaire) {
         // Merge edited fields back into the original resource structure
         const updatedQuestionnaire = {
@@ -227,14 +228,15 @@ export default function QuestionnaireDetail() {
         
         // Update with the merged resource
         result = await questionnairesAPI.updateQuestionnaire(questionnaireId, updatedQuestionnaire);
-        setOriginalQuestionnaire(result);
-        // Extract editable fields from the result
+        // Fall back to the locally merged object if the API returns no body (201/204)
+        const savedExisting = result ?? updatedQuestionnaire;
+        setOriginalQuestionnaire(savedExisting);
         setFormData({
-          ...result,
-          title: result.title,
-          description: result.description,
-          status: result.status,
-          item: result.item || [],
+          ...savedExisting,
+          title: savedExisting.title,
+          description: savedExisting.description,
+          status: savedExisting.status,
+          item: savedExisting.item || [],
         });
       }
       
