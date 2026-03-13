@@ -48,13 +48,17 @@ export default function QuestionnaireDetail() {
   const [isLoading, setIsLoading] = useState(!isNewQuestionnaire);
   const [originalQuestionnaire, setOriginalQuestionnaire] = useState<Questionnaire | null>(null);
 
+  // Initialize with minimal data - will be populated from fetch or kept for new questionnaires
   const [formData, setFormData] = useState<Questionnaire>({
     resourceType: 'Questionnaire',
     id: questionnaireId || generateUUID(),
     meta: {
       versionId: '1',
       lastUpdated: new Date().toISOString(),
-      profile: ['http://hl7.org/fhir/StructureDefinition/Questionnaire'],
+      // Only use hardcoded profile for new questionnaires
+      ...(isNewQuestionnaire && {
+        profile: ['http://hl7.org/fhir/StructureDefinition/Questionnaire'],
+      }),
     },
     url: `urn:uuid:${questionnaireId || generateUUID()}`,
     title: '',
@@ -87,8 +91,17 @@ export default function QuestionnaireDetail() {
         try {
           setIsLoading(true);
           const data = await questionnairesAPI.getQuestionnaire(questionnaireId);
+          // Keep the complete original resource intact
           setOriginalQuestionnaire(data);
-          setFormData(data);
+          // Only populate editable fields in formData, preserving the original structure
+          setFormData({
+            ...data,
+            // Extract only the fields that will be edited in the UI
+            title: data.title,
+            description: data.description,
+            status: data.status,
+            item: data.item || [],
+          });
         } catch (error) {
           console.error('Error fetching questionnaire:', error);
           setSnackbar({
@@ -185,17 +198,44 @@ export default function QuestionnaireDetail() {
     try {
       let result;
       if (isNewQuestionnaire) {
-        // Create new questionnaire
+        // Create new questionnaire with all fields from formData (includes hardcoded profile)
         result = await questionnairesAPI.createQuestionnaire(formData);
         setOriginalQuestionnaire(result);
-        setFormData(result);
+        // Extract editable fields from the result
+        setFormData({
+          ...result,
+          title: result.title,
+          description: result.description,
+          status: result.status,
+          item: result.item || [],
+        });
         // Update URL to remove isNew state
         navigate(`/questionnaires/${result.id}`, { replace: true });
-      } else if (questionnaireId) {
-        // Update existing questionnaire
-        result = await questionnairesAPI.updateQuestionnaire(questionnaireId, formData);
+      } else if (questionnaireId && originalQuestionnaire) {
+        // Merge edited fields back into the original resource structure
+        const updatedQuestionnaire = {
+          ...originalQuestionnaire, // Preserve all original fields including profile, meta, etc.
+          title: formData.title,
+          description: formData.description,
+          status: formData.status,
+          item: formData.item,
+          meta: {
+            ...originalQuestionnaire.meta,
+            lastUpdated: new Date().toISOString(), // Update timestamp
+          },
+        };
+        
+        // Update with the merged resource
+        result = await questionnairesAPI.updateQuestionnaire(questionnaireId, updatedQuestionnaire);
         setOriginalQuestionnaire(result);
-        setFormData(result);
+        // Extract editable fields from the result
+        setFormData({
+          ...result,
+          title: result.title,
+          description: result.description,
+          status: result.status,
+          item: result.item || [],
+        });
       }
       
       // Show success message
