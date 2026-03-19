@@ -82,6 +82,17 @@ export interface AdjudicationResponse {
   message: string;
 }
 
+export type PARequestPriority = "routine" | "urgent" | "asap" | "stat";
+
+/**
+ * Additional Information for PA Request
+ */
+export type AdditionalInformation = {
+    informationCodes: string[];
+    reasonCode?: JSON; // FHIR CodeableConcept
+    priority: PARequestPriority;
+};
+
 /**
  * Error Payload
  */
@@ -187,6 +198,33 @@ class PARequestsAPI {
         body: JSON.stringify(adjudication),
       }
     );
+  }
+
+  /**
+   * Submit additional information request for a PA request
+   * @param requestId - Unique PA request identifier
+   * @param payload - Additional information request payload
+   */
+  async submitAdditionalInfo(
+    requestId: string,
+    payload: AdditionalInformation
+  ): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/pa-requests/${requestId}/additional-info`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) {
+      const error: ErrorPayload = await response.json().catch(() => ({
+        timestamp: new Date().toISOString(),
+        status: response.status,
+        reason: response.statusText,
+        message: 'An error occurred',
+        path: `/pa-requests/${requestId}/additional-info`,
+        method: 'POST',
+      }));
+      throw error;
+    }
   }
 }
 

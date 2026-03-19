@@ -29,6 +29,10 @@ import {
   TableHead,
   TableRow,
   Tooltip,
+  Checkbox,
+  ListItemText,
+  Autocomplete,
+  Snackbar,
 } from '@wso2/oxygen-ui';
 import {
   ArrowLeft,
@@ -50,6 +54,9 @@ import {
   FileQuestion,
   Paperclip,
   Eye,
+  Bell,
+  Send,
+  X,
 } from '@wso2/oxygen-ui-icons-react';
 import type {
   AdjudicationCode,
@@ -64,9 +71,12 @@ import type {
   ClaimItem,
   ClaimItemWithAdjudication,
   PARequestDetail as PARequestDetailType,
-  CodeableConcept
+  CodeableConcept,
+  PARequestPriority,
 } from '../types/api';
 import { paRequestsAPI } from '../api/paRequests';
+import type { AdditionalInformation } from '../api/paRequests';
+import valueSetData from '../assets/valueSets/valueset.json';
 import { PARequestDetailSkeleton } from '../components/LoadingSkeletons';
 import { useAuth } from '../components/useAuth';
 
@@ -80,6 +90,21 @@ const ADJUDICATION_CODES: AdjudicationCode[] = [
   'eligpercent',
   'tax',
   'benefit',
+];
+
+// Attachment codes from PAS LOINC value set
+const ATTACHMENT_CODES = (valueSetData.compose.include[0].concept as Array<{ code: string; display: string }>);
+
+// PA-relevant reason codes from HL7 v3 ActReason code system (CodeSystem-v3-ActReason)
+const REASON_CODES = [
+  { code: 'COVAUTH', display: 'Coverage Authorization', definition: 'Prior authorization or predetermination of coverage for services' },
+  { code: 'MEDNEC', display: 'Medical Necessity', definition: 'Required for medical reason(s)' },
+  { code: 'CLMATTCH', display: 'Claim Attachment', definition: 'Additional clinical evidence in support of a request for coverage or payment' },
+  { code: 'ADMREV', display: 'Administrative Review', definition: 'Evaluate for service authorization, payment, reporting, or performance/outcome measures' },
+  { code: 'COVERAGE', display: 'Coverage Under Policy or Program', definition: 'Activities related to coverage under a program or policy' },
+  { code: 'TREAT', display: 'Treatment', definition: 'Provision of health care' },
+  { code: 'ETREAT', display: 'Emergency Treatment', definition: 'Provision of immediately needed health care for an emergent condition' },
+  { code: 'gold-card', display: 'Gold Card', definition: 'Ordering Practitioner has been granted gold card status — reduced prior authorization requirements' },
 ];
 
 // Helper functions to extract FHIR data
@@ -166,6 +191,13 @@ export default function PARequestDetail() {
   const [expandedQuestionnaire, setExpandedQuestionnaire] = useState<number | false>(0);
   const [expandedAttachment, setExpandedAttachment] = useState<number | false>(false);
   const [submitting, setSubmitting] = useState(false);
+  const [additionalInfoForm, setAdditionalInfoForm] = useState<{
+    informationCodes: string[];
+    reasonCode: string;
+    priority: PARequestPriority;
+  }>({ informationCodes: [], reasonCode: '', priority: 'routine' });
+  const [submittingAdditionalInfo, setSubmittingAdditionalInfo] = useState(false);
+  const [snackbarError, setSnackbarError] = useState<string | null>(null);
 
   // Fetch PA request details
   useEffect(() => {
@@ -222,6 +254,45 @@ export default function PARequestDetail() {
   if (!isAuthenticated) {
     return null;
   }
+
+  const handleSubmitAdditionalInfo = async () => {
+    if (!requestId) return;
+    if (additionalInfoForm.informationCodes.length === 0) {
+      setSnackbarError('Please select at least one attachment code before submitting.');
+      return;
+    }
+
+    setSubmittingAdditionalInfo(true);
+    try {
+      const reasonEntry = REASON_CODES.find(r => r.code === additionalInfoForm.reasonCode);
+      const payload: AdditionalInformation = {
+        informationCodes: additionalInfoForm.informationCodes,
+        priority: additionalInfoForm.priority,
+        ...(reasonEntry && {
+          reasonCode: {
+            coding: [{
+              system: 'http://terminology.hl7.org/CodeSystem/v3-ActReason',
+              code: reasonEntry.code,
+              display: reasonEntry.display,
+            }],
+          } as unknown as JSON,
+        }),
+      };
+
+      await paRequestsAPI.submitAdditionalInfo(requestId, payload);
+      setAdditionalInfoForm({ informationCodes: [], reasonCode: '', priority: 'routine' });
+
+      // Refresh to show the new communication request
+      const updated = await paRequestsAPI.getPARequestDetail(requestId);
+      setPaRequest(updated);
+      setClaimItems(initializeItemsWithState(updated.items, updated.status));
+    } catch (err) {
+      console.error('Error submitting additional info request:', err);
+      setSnackbarError('Failed to submit additional information request. Please try again.');
+    } finally {
+      setSubmittingAdditionalInfo(false);
+    }
+  };
 
   const handleBack = () => {
     if (isFromProcessedPage) {
@@ -1148,6 +1219,256 @@ export default function PARequestDetail() {
         </Card>
       )}
 
+      {/* Communication Requests Section */}
+      <Card sx={{ mb: 4 }}>
+        <CardContent>
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+            <Bell size={24} style={{ marginRight: 8 }} />
+            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+              Communication Requests
+            </Typography>
+          </Box>
+
+          {/* Existing Communication Requests */}
+          {paRequest.communicationRequests && paRequest.communicationRequests.length > 0 ? (
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
+                Existing Requests ({paRequest.communicationRequests.length})
+              </Typography>
+              <TableContainer component={Paper} variant="outlined">
+                <Table size="small">
+                  <TableHead>
+                    <TableRow sx={{ bgcolor: 'action.hover' }}>
+                      <TableCell sx={{ fontWeight: 600 }}>Date Requested</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>Priority</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>Requested Information</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>Reason</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {paRequest.communicationRequests.map((req) => (
+                      <TableRow key={req.id} hover>
+                        <TableCell>
+                          <Typography variant="body2">{formatDate(req.requestedDate)}</Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            label={req.status}
+                            size="small"
+                            color={
+                              req.status === 'completed' ? 'success' :
+                              req.status === 'active' ? 'primary' :
+                              req.status === 'revoked' || req.status === 'entered-in-error' ? 'error' :
+                              'default'
+                            }
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            label={req.priority}
+                            size="small"
+                            color={req.priority === 'urgent' || req.priority === 'stat' ? 'error' : 'default'}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Stack spacing={0.5}>
+                            {req.requestedItems.map((item, idx) => (
+                              <Box key={idx}>
+                                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                  {item.display || item.code}
+                                </Typography>
+                                {item.display && (
+                                  <Typography variant="caption" color="text.secondary">
+                                    {item.code}
+                                  </Typography>
+                                )}
+                              </Box>
+                            ))}
+                          </Stack>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2">{req.reasonCode || '—'}</Typography>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Box>
+          ) : (
+            <Typography variant="body2" color="text.secondary" sx={{ mb: isProcessedView ? 0 : 3 }}>
+              No communication requests yet.
+            </Typography>
+          )}
+
+          {/* Request Additional Information Form - pending only */}
+          {!isProcessedView && (
+            <>
+              {paRequest.communicationRequests && paRequest.communicationRequests.length > 0 && (
+                <Divider sx={{ mb: 3 }} />
+              )}
+              <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 2, bgcolor: 'background.default' }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2.5 }}>
+                  Request Additional Information
+                </Typography>
+                <Stack spacing={2.5}>
+                  {/* Attachment Codes — search bar + selected list below */}
+                  <Box>
+                    <Autocomplete
+                      multiple
+                      options={ATTACHMENT_CODES}
+                      getOptionLabel={(option) => option.display}
+                      value={ATTACHMENT_CODES.filter(c => additionalInfoForm.informationCodes.includes(c.code))}
+                      onChange={(_, newValue) =>
+                        setAdditionalInfoForm((prev) => ({
+                          ...prev,
+                          informationCodes: (newValue as Array<{ code: string; display: string }>).map(v => v.code),
+                        }))
+                      }
+                      isOptionEqualToValue={(option, value) => option.code === value.code}
+                      renderTags={() => null}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="Search Attachment Codes"
+                          placeholder="Type to search and select..."
+                          size="small"
+                        />
+                      )}
+                      renderOption={(props, option, { selected }) => (
+                        <MenuItem {...props} key={option.code}>
+                          <Checkbox checked={selected} size="small" sx={{ mr: 1 }} />
+                          <ListItemText
+                            primary={option.display}
+                            secondary={option.code}
+                            slotProps={{
+                              primary: { variant: 'body2' },
+                              secondary: { variant: 'caption' },
+                            }}
+                          />
+                        </MenuItem>
+                      )}
+                      fullWidth
+                      disableCloseOnSelect
+                      slotProps={{
+                        listbox: { style: { backgroundColor: '#fff' } },
+                      }}
+                    />
+
+                    {/* Selected codes list */}
+                    {additionalInfoForm.informationCodes.length > 0 && (
+                      <Paper variant="outlined" sx={{ mt: 1 }}>
+                        <Box sx={{ px: 1.5, py: 0.75, bgcolor: 'action.hover', borderBottom: 1, borderColor: 'divider' }}>
+                          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                            Selected Codes ({additionalInfoForm.informationCodes.length})
+                          </Typography>
+                        </Box>
+                        <Box sx={{ maxHeight: 200, overflowY: 'auto' }}>
+                          <Table size="small">
+                            <TableBody>
+                              {additionalInfoForm.informationCodes.map((code) => {
+                                const item = ATTACHMENT_CODES.find(c => c.code === code);
+                                return (
+                                  <TableRow key={code} hover>
+                                    <TableCell sx={{ py: 0.75, width: 110 }}>
+                                      <Typography variant="caption" sx={{ fontFamily: 'monospace', color: 'text.secondary' }}>
+                                        {code}
+                                      </Typography>
+                                    </TableCell>
+                                    <TableCell sx={{ py: 0.75 }}>
+                                      <Typography variant="body2">{item?.display}</Typography>
+                                    </TableCell>
+                                    <TableCell sx={{ py: 0.75, width: 36 }} align="right">
+                                      <IconButton
+                                        size="small"
+                                        onClick={() =>
+                                          setAdditionalInfoForm((prev) => ({
+                                            ...prev,
+                                            informationCodes: prev.informationCodes.filter(c => c !== code),
+                                          }))
+                                        }
+                                      >
+                                        <X size={14} />
+                                      </IconButton>
+                                    </TableCell>
+                                  </TableRow>
+                                );
+                              })}
+                            </TableBody>
+                          </Table>
+                        </Box>
+                      </Paper>
+                    )}
+                  </Box>
+
+                  {/* Reason + Priority row */}
+                  <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+                    <FormControl fullWidth size="small">
+                      <InputLabel>Reason</InputLabel>
+                      <Select
+                        value={additionalInfoForm.reasonCode}
+                        label="Reason"
+                        onChange={(e) =>
+                          setAdditionalInfoForm((prev) => ({ ...prev, reasonCode: e.target.value }))
+                        }
+                        renderValue={(selected) =>
+                          REASON_CODES.find(r => r.code === selected)?.display || selected
+                        }
+                      >
+                        {REASON_CODES.map((reason) => (
+                          <MenuItem key={reason.code} value={reason.code}>
+                            <ListItemText
+                              primary={reason.display}
+                              secondary={reason.definition}
+                              slotProps={{
+                                primary: { variant: 'body2' },
+                                secondary: { variant: 'caption', sx: { whiteSpace: 'normal' } },
+                              }}
+                            />
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+
+                    <FormControl fullWidth size="small">
+                      <InputLabel>Priority</InputLabel>
+                      <Select
+                        value={additionalInfoForm.priority}
+                        label="Priority"
+                        onChange={(e) =>
+                          setAdditionalInfoForm((prev) => ({
+                            ...prev,
+                            priority: e.target.value as PARequestPriority,
+                          }))
+                        }
+                      >
+                        <MenuItem value="routine">Routine</MenuItem>
+                        <MenuItem value="urgent">Urgent</MenuItem>
+                        <MenuItem value="asap">ASAP</MenuItem>
+                        <MenuItem value="stat">Stat</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Box>
+
+                  <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      startIcon={<Send size={18} />}
+                      onClick={handleSubmitAdditionalInfo}
+                      disabled={submittingAdditionalInfo || additionalInfoForm.informationCodes.length === 0}
+                    >
+                      {submittingAdditionalInfo ? 'Submitting...' : 'Request Additional Info'}
+                    </Button>
+                  </Box>
+                </Stack>
+              </Paper>
+            </>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Item Adjudication Details */}
       <Card sx={{ mb: 4 }}>
         <CardContent>
@@ -1495,6 +1816,16 @@ export default function PARequestDetail() {
       )}
       </>
       )}
+      <Snackbar
+        open={!!snackbarError}
+        autoHideDuration={5000}
+        onClose={() => setSnackbarError(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert severity="error" onClose={() => setSnackbarError(null)} sx={{ width: '100%' }}>
+          {snackbarError}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

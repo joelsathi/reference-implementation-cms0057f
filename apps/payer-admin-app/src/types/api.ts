@@ -195,6 +195,26 @@ export interface ProcessNote {
   type?: string;
 }
 
+export type CommunicationRequestStatus = "draft" | "active" | "on-hold" | "revoked" | "completed" | "entered-in-error" | 
+    "unknown";
+
+export type PARequestPriority = "routine" | "urgent" | "asap" | "stat";
+
+export type AdditionalInfoItem = {
+    code: string;
+    display?: string;
+};
+
+
+export interface CommunicationRequestItem {
+    id: string;
+    status: CommunicationRequestStatus;
+    priority: PARequestPriority;
+    requestedItems: AdditionalInfoItem[];
+    reasonCode?: string;
+    requestedDate?: string;
+};
+
 /**
  * PA Request Detail - Complete information for a specific PA request
  */
@@ -217,4 +237,5 @@ export interface PARequestDetail {
   coverage?: CoverageInformation[];
   total: ClaimTotals;
   processNotes?: ProcessNote[];
+  communicationRequests?: CommunicationRequestItem[];
 }
