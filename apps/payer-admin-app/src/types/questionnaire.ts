@@ -327,23 +327,6 @@ export function createQuestionnaireItem(
 }
 
 /**
- * Helper function to create a new questionnaire
- */
-export function createQuestionnaire(title = 'New Questionnaire'): Questionnaire {
-  const id = generateUUID();
-  return {
-    resourceType: 'Questionnaire',
-    id,
-    url: `urn:uuid:${id}`,
-    title,
-    status: 'draft',
-    subjectType: ['Patient'],
-    date: new Date().toISOString(),
-    item: [],
-  };
-}
-
-/**
  * Helper function to get answer value from enableWhen
  */
 export function getEnableWhenAnswerValue(enableWhen: QuestionnaireEnableWhen): unknown {
@@ -358,39 +341,6 @@ export function getEnableWhenAnswerValue(enableWhen: QuestionnaireEnableWhen): u
   if (enableWhen.answerQuantity !== undefined) return enableWhen.answerQuantity;
   if (enableWhen.answerReference !== undefined) return enableWhen.answerReference;
   return undefined;
-}
-
-/**
- * Helper function to get answer type from item type
- */
-export function getAnswerTypeFromItemType(itemType: QuestionnaireItemType): string {
-  switch (itemType) {
-    case 'boolean':
-      return 'answerBoolean';
-    case 'decimal':
-      return 'answerDecimal';
-    case 'integer':
-      return 'answerInteger';
-    case 'date':
-      return 'answerDate';
-    case 'dateTime':
-      return 'answerDateTime';
-    case 'time':
-      return 'answerTime';
-    case 'string':
-    case 'text':
-    case 'url':
-      return 'answerString';
-    case 'choice':
-    case 'open-choice':
-      return 'answerCoding';
-    case 'quantity':
-      return 'answerQuantity';
-    case 'reference':
-      return 'answerReference';
-    default:
-      return 'answerString';
-  }
 }
 
 /**
