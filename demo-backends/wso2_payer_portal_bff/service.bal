@@ -388,7 +388,7 @@ service /v1 on bff_listener {
     # http:InternalServerError (Internal server error)
     isolated resource function post pa\-requests/[string requestId]/adjudication(http:Request req, @http:Payload AdjudicationSubmission payload) returns AdjudicationResponse|http:NotFound|http:InternalServerError {
         ActorInfo actor = getActorFromRequest(req);
-        AdjudicationResponse|error response = submitPARequestAdjudication(requestId, payload);
+        AdjudicationResponse|error response = submitPARequestAdjudication(requestId, payload, req);
         if (response is error) {
             log:printError("Failed to submit adjudication: " + response.message());
             auditLogger.printError("Failed to submit adjudication",
@@ -432,7 +432,7 @@ service /v1 on bff_listener {
         returns http:Ok|http:NotFound|http:InternalServerError {
 
         ActorInfo actor = getActorFromRequest(req);
-        AdditionalInfoResponse|error result = submitPARequestAdditionalInfo(requestId, payload);
+        AdditionalInfoResponse|error result = submitPARequestAdditionalInfo(requestId, payload, req);
         if (result is error) {
             log:printError("Failed to submit additional info: " + result.message());
             auditLogger.printError("Failed to submit additional info",
