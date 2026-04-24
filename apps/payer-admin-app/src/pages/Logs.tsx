@@ -301,7 +301,7 @@ export default function Logs() {
   }, []);
 
   const handleQuery = () => {
-    void fetchLogs({ timeFilter: timeFilter || undefined, keyword: keyword || undefined });
+    void fetchLogs({ timeFilter: timeFilter || undefined, keyword: keyword.trim() || undefined });
   };
 
   const handleRemoveKeyword = () => {
