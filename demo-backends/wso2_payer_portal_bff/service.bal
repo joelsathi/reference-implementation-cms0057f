@@ -108,7 +108,7 @@ service /v1 on bff_listener {
     # http:Ok (Payer updated successfully)
     # http:NotFound (Resource not found)
     # http:InternalServerError (Internal server error)
-    isolated resource function put payers/[string payerId](http:Request req, @http:Payload PayerFormData payload) returns Payer|http:Conflict|http:InternalServerError {
+    isolated resource function put payers/[string payerId](http:Request req, @http:Payload PayerFormData payload) returns Payer|http:Conflict|http:InternalServerError|http:NotFound {
         ActorInfo actor = getActorFromRequest(req);
         Payer|error? result = updatePayer(payerId, payload);
         if (result is error) {
@@ -121,7 +121,7 @@ service /v1 on bff_listener {
             if (result.message().includes("duplicate") || result.message().includes("unique")) {
                 return http:CONFLICT;
             }
-            return http:INTERNAL_SERVER_ERROR;
+            return http:NOT_FOUND;
         }
         if (result is ()) {
             log:printWarn("Payer with ID " + payerId + " not found");
@@ -712,10 +712,12 @@ service /v1 on bff_listener {
         string? payerId = ();
         string? patientId = ();
         PdexExchangeRecord|error exchangeRecord = getPdexExchangeRecord(requestId);
-        if exchangeRecord is PdexExchangeRecord {
-            payerId = exchangeRecord.payerId;
-            patientId = exchangeRecord.memberId;
+        if exchangeRecord is error {
+            log:printError("Failed to retrieve PDex exchange record for audit context: " + exchangeRecord.message());
+            return error("Failed to retrieve PDex exchange record: " + exchangeRecord.message());
         }
+        payerId = exchangeRecord.payerId;
+        patientId = exchangeRecord.memberId;
 
         json|error response = pdexHttpClient->post("/trigger-data-exchange/" + requestId, message = ());
         if response is error {

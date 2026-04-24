@@ -14,7 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import { useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   Box,
@@ -249,16 +249,15 @@ function StructuredDetailPanel({ details }: { details: Record<string, unknown> }
   return (
     <Box sx={{ display: 'grid', gridTemplateColumns: '180px 1fr', gap: '2px 16px', alignItems: 'start' }}>
       {entries.map(([key, value]) => (
-        <>
+        <Fragment key={key}>
           <Typography
-            key={`k-${key}`}
             variant="body2"
             sx={{ color: 'text.secondary', fontWeight: 500, pt: Array.isArray(value) || typeof value === 'object' ? 0.5 : 0 }}
           >
             {key}
           </Typography>
-          <Box key={`v-${key}`}>{renderDetailValue(key, value)}</Box>
-        </>
+          <Box>{renderDetailValue(key, value)}</Box>
+        </Fragment>
       ))}
     </Box>
   );
@@ -485,10 +484,9 @@ export default function Logs() {
                     (!structured && entry.isJson);
 
                   return (
-                    <>
+                    <Fragment key={`group-${index}`}>
                       {/* Main row */}
                       <TableRow
-                        key={`row-${index}`}
                         hover
                         sx={{
                           cursor: hasExpandable ? 'pointer' : 'default',
@@ -609,7 +607,7 @@ export default function Logs() {
 
                       {/* Expanded detail row */}
                       {isExpanded && (
-                        <TableRow key={`detail-${index}`}>
+                        <TableRow>
                           <TableCell />
                           <TableCell colSpan={6} sx={{ pt: 2, pb: 2, bgcolor: 'action.selected' }}>
                             {structured ? (
@@ -645,7 +643,7 @@ export default function Logs() {
                           </TableCell>
                         </TableRow>
                       )}
-                    </>
+                    </Fragment>
                   );
                 })}
               </TableBody>
